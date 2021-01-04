@@ -12,8 +12,8 @@ sys.path.append("../utils")
 sys.path.append("classification_utilities")
 
 from utils import *
-from classification_utils import *
 from interface_utils import *
+from classification_utils import *
 from classification_interface_utils import *
 
 def main(args):
@@ -26,19 +26,17 @@ def main(args):
         logging.error("The path {} is not a file. Aborting..".format(args.datalabels))
         exit()
 
-    if filepath_is_not_valid(args.test):
-        logging.error("The path {} is not a file. Aborting..".format(args.test))
+    if not filepath_can_be_reached(args.output_path):
+        logging.error("The path {} is not a file. Aborting..".format(args.output_path))
         exit()
 
-    if filepath_is_not_valid(args.testlabels):
-        logging.error("The path {} is not a file. Aborting..".format(args.testlabels))
+    if filepath_is_not_valid(args.model_path):
+        logging.error("The path {} is not a file. Aborting..".format(args.model_path))
         exit()
 
     # parse the data from the training and test set
     X = parse_dataset(args.data)
     Y = parse_labelset(args.datalabels)
-    X_test = parse_dataset(args.test)
-    Y_test = parse_labelset(args.testlabels)
 
     rows = X.shape[1]
     columns = X.shape[2]
@@ -46,15 +44,12 @@ def main(args):
     # We also need to convert the labels to binary arrays
     lb = LabelBinarizer()
     Y = lb.fit_transform(Y)
-    Y_test = lb.transform(Y_test)
 
     # reshape so that the shapes are (number_of_images, rows, columns, 1)
     X = X.reshape(-1, rows, columns, 1)
-    X_test = X_test.reshape(-1, rows, columns, 1)
 
     # normalize
     X = X / 255.
-    X_test = X_test / 255.
 
 
     # split data to training and validation
@@ -62,84 +57,45 @@ def main(args):
     X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.15, random_state=rs, shuffle=True)
 
 
-    # use the list below to keep track of the configurations used for every experiment
-    configurations = []
+    units, epochs, batch_size = (128, 1, 180)
 
-    # use the lists below to keep track of the histories returned from each experiment
-    histories = [] # before fine-tuning
-    histories_ft = [] # after fine-tuning
+    # load the encoder
+    encoder = load_keras_model(args.model_path)
+    # "freeze" its weights
+    encoder.trainable = False
 
-    # the option provided by the user
-    option = 1
+    # create the classifier using the encoder
+    classifier = create_classifier(rows, columns, encoder, units)
+    print()
+    classifier.summary()
 
-    # while the user wants to keep repeating the experiment
-    while option != 0:
-        configuration = get_classification_input()
-        configurations.append(configuration)
-        units, epochs, batch_size = configuration
+    # setup the classifier
+    callback = ReduceLROnPlateau(monitor="val_loss", factor=1.0/2, patience=4, min_delta=0.005,
+                                  cooldown=0, min_lr=1e-8, verbose=1)
 
-        # load the encoder
-        encoder = load_keras_model(args.modelpath)
-        # "freeze" its weights
-        encoder.trainable = False
+    classifier.compile(optimizer=optimizers.Adam(1e-3), loss="categorical_crossentropy", metrics=["categorical_crossentropy", "accuracy"])
 
-        # create the classifier using the encoder
-        classifier = create_classifier(rows, columns, encoder, units)
-        print()
-        classifier.summary()
+    # train with the encoder frozen
+    history = classifier.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs,
+                              shuffle=True, validation_data=(X_val, Y_val),
+                              callbacks=[callback])
 
-        # setup the classifier
-        callback = ReduceLROnPlateau(monitor="val_loss", factor=1.0/2, patience=4, min_delta=0.005,
-                                      cooldown=0, min_lr=1e-8, verbose=1)
 
-        classifier.compile(optimizer=optimizers.Adam(1e-3), loss="categorical_crossentropy", metrics=["categorical_crossentropy", "accuracy"])
+    # "unfreeze" the encoder
+    encoder.trainable = True
 
-        # train with the encoder frozen
-        history = classifier.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs,
-                                  shuffle=True, validation_data=(X_val, Y_val),
-                                  callbacks=[callback])
+    # now train the whole model
+    history_ft = classifier.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs,
+                              shuffle=True, validation_data=(X_val, Y_val),
+                              callbacks=[callback])
 
-        histories.append(history)
+    Y_prob = classifier.predict(X)
+    Y_pred = np.round(Y_prob)
+    Y_unbin = np.argmax(Y_pred, 1)
+    produce_label_file(Y_unbin, args.output_path)
+    Yy = parse_labelset(args.output_path)
+    print(Yy[10:20])
 
-        # "unfreeze" the encoder
-        encoder.trainable = True
-
-        print()
-        classifier.summary()
-
-        # now train the whole model
-        history_ft = classifier.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs,
-                                  shuffle=True, validation_data=(X_val, Y_val),
-                                  callbacks=[callback])
-
-        # save this history
-        histories_ft.append(history_ft)
-
-        # get the new option from the user
-        option = get_option()
-
-        # while the user wants to either print the graphs or save the model, keep asking him
-        while option == 2 or option == 3:
-
-            # distinguish which option the user chose
-            if option == 2:
-                # get the next option on which graph to show
-                answer = get_graph_option()
-
-                # distinguish the answer
-                if answer == 1:
-                    # show the graph for the current experiment
-                    show_experiment_graph(history, history_ft)
-                else:
-                    # call the appropriate function to show the graphs of losses
-                    show_graphs(histories, configurations)
-
-            else:
-                # print the results of the current model
-                show_results(classifier, X_test, Y_test)
-
-            # get the new option from the user
-            option = get_option()
 
 if __name__ == "__main__":
     """ call main() function here """
@@ -147,7 +103,7 @@ if __name__ == "__main__":
     # configure the level of the logging and the format of the messages
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s\n")
     # parse the command line input
-    args = parse_input(autoencoder=False)
+    args = parse_input()
     # call the main() driver function
     main(args)
     print("\n")
