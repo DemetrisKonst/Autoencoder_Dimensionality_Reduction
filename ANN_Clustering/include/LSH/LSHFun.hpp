@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _LSH_FUNC
+#define _LSH_FUNC
 
 #include <iostream>
 #include <vector>
@@ -138,3 +139,6 @@ public:
     return concatRes;
   }
 };
+
+
+#endif

@@ -29,7 +29,7 @@ bool interface::FileIsAccessible(const std::string& path)
 
   /* close the file */
   file.close();
-  
+
   /* return true if it succeeds; else false */
   return is_accessible;
 }
@@ -126,7 +126,11 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
     case NO_INPUT:
     {
       std::cerr << "ERROR: Not enough input was given by the user.\n"
-                << "At least the path of the input file (dataset) has to be provided in the command line parameters.\n";
+                << "At least the following paths have to be provided:\n\n"
+                << "\t1) -d: Path to the original training space\n\t2) -i: Path to the reduced training space (-i)\n"
+                << "\t3) -q: Path to the original query space\n\t4) -s: Path to the reduced query space\n"
+                << "\t5) -o: Path of the output file that will be created"
+                << "\nin the command line parameters.\n";
       break;
     }
     case NO_INPUT_CLUSTERING:
@@ -231,12 +235,22 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
     }
     case INVALID_INFILE_PATH:
     {
-      std::cerr << "ERROR: The path passed for the input file (dataset) is invalid.\n";
+      std::cerr << "ERROR: The path passed for the original space input file (dataset) is invalid.\n";
       break;
     }
     case INVALID_QFILE_PATH:
     {
-      std::cerr << "ERROR: The path passed for the query file is invalid.\n";
+      std::cerr << "ERROR: The path passed for the original space query file is invalid.\n";
+      break;
+    }
+    case INVALID_RED_INFILE_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the reduced space input file (dataset) is invalid.\n";
+      break;
+    }
+    case INVALID_RED_QFILE_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the reduced space query file is invalid.\n";
       break;
     }
     case INVALID_OUTFILE_PATH:

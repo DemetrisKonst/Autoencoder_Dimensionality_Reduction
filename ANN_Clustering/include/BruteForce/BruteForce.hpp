@@ -82,7 +82,7 @@ public:
   This is used only on ANN (not clustering) and also requires that its LSH or Hypercube
   counterpart will be executed (so as to compare times and distances).
   */
-  void buildOutput (interface::output::KNNOutput& output, interface::Dataset& query, int N, int thresh = 0) {
+  void buildOutput (interface::output::KNNOutput& output, interface::Dataset<T>& query, int N, int thresh = 0) {
     // A vector containing the ids of all query items
     std::vector<int> queryIdVec;
     // The true distances of the first k near neighbors from each query item

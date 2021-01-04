@@ -1,3 +1,6 @@
+#ifndef _LSH
+#define _LSH
+
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -226,7 +229,7 @@ public:
   This is used only on ANN (not clustering) and also requires that its brute force
   counterpart will be executed (so as to compare times and distances).
   */
-  void buildOutput (interface::output::KNNOutput& output, interface::Dataset& query, int N, double R, int thresh = 0) {
+  void buildOutput (interface::output::KNNOutput& output, interface::Dataset<T>& query, int N, double R, int thresh = 0) {
     // A vector of all neighbors' ids returned by kNN for each query item
     std::vector<std::vector<int>> neighborIdVec;
     // The distances of the aforementioned neighbors to the query item
@@ -288,3 +291,6 @@ public:
     output.r_near_neighbors_id = rsIdVec;
   }
 };
+
+
+#endif
