@@ -93,7 +93,7 @@ namespace interface
 
   /* function used to read input from the dataset */
   template <typename T>
-  int ParseDataset(const std::string& filename, Dataset<T>& dataset, ExitCode& status)
+  int ParseDataset(const std::string& filename, Dataset<T>& dataset, ExitCode& status, bool values_in_big_endian=false)
   {
     /* create an ifstream item to open and navigate the file */
     std::ifstream input_file(filename, std::ios::binary);
@@ -132,10 +132,14 @@ namespace interface
     for (int i = 0; i < dataset.number_of_images; i++)
     {
       dataset.images[i] = new T[area];
-      /* add the pixels */
-      for (uint32_t pixel = 0; pixel < area; pixel++)
+      /* add the data points */
+      for (uint32_t data_point = 0; data_point < area; data_point++)
       {
-        input_file.read((char *) &dataset.images[i][pixel], sizeof(T));
+        input_file.read((char *) &dataset.images[i][data_point], sizeof(T));
+        if (values_in_big_endian)
+        {
+          dataset.images[i][data_point] = ntohs(dataset.images[i][data_point]);
+        }
       }
     }
 

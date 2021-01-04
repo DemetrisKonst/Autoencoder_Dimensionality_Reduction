@@ -38,7 +38,7 @@ int main(int argc, char const *argv[]) {
 
   std::cout << "peos2" << std::endl;
   /* parse reduced dataset */
-  success = interface::ParseDataset(files.reduced_input_file, reduced_dataset, status);
+  success = interface::ParseDataset(files.reduced_input_file, reduced_dataset, status, true);
   if (success != 1) {
     interface::output::PrintErrorMessageAndExit(status);
   }
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[]) {
 
   std::cout << "peos4" << std::endl;
   /* parse reduced queryset */
-  success = interface::ParseDataset(files.reduced_query_file, reduced_queryset, status);
+  success = interface::ParseDataset(files.reduced_query_file, reduced_queryset, status, true);
   if (success != 1) {
     interface::output::PrintErrorMessageAndExit(status);
   }
@@ -68,7 +68,7 @@ int main(int argc, char const *argv[]) {
 
   std::cout << std::endl;
   std::cout << "random entry from original dataset: " << +original_dataset.images[69][400] << '\n';
-  std::cout << "random entry from reduced dataset: " << +reduced_dataset.images[69][3] << '\n';
+  std::cout << "random entry from reduced dataset: " << +reduced_dataset.images[12][0] << '\n';
 
 
   // ----------------------------      COMMENTED      ---------------------------- //
