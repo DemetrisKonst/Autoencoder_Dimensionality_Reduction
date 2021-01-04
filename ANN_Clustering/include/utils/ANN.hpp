@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "../interfaces/interface.h"
 #include "../metrics/metrics.hpp"
 #include "../LSH/LSHFun.hpp"
 
@@ -105,5 +106,54 @@ namespace utils {
 
     double deviation = sqrt(variance);
     return std::make_pair(mean, deviation);
+  }
+
+  /*
+  Method which calculates the actual distances between items in the original space, then
+  produces an approximation factor for each model compared to the brute force version
+  */
+  template <typename T>
+  void calculateDistances(interface::output::SearchOutput& output, const interface::Data<T>& dataset, const interface::Data<T>& queryset){
+    // Initialize some distance vectors
+    std::vector<double> trueDistVec;
+    std::vector<double> lshDistVec;
+    std::vector<double> redDistVec;
+
+    // Sums of distances (to calculate approximation factors)
+    double true_distance_sum = 0.0;
+    double lsh_distance_sum = 0.0;
+    double reduced_distance_sum = 0.0;
+
+    // For each query item
+    for (int i = 0; i < queryset.n; i++){
+      int q_id = output.query_id[i];
+      // Find the respective nearest neighbors of the 3 models
+      int tn_id = output.true_neighbors_id[i];
+      int ln_id = output.lsh_neighbors_id[i];
+      int rn_id = output.reduced_neighbors_id[i];
+
+      // Calculate their distances from the query item
+      int trueDist = metrics::ManhattanDistance<T>(queryset.items[q_id]->data, dataset.items[tn_id]->data, 784);
+      // Increase the sum
+      true_distance_sum += trueDist;
+      // Append them to the distance vector
+      trueDistVec.push_back((double)trueDist);
+
+      int lshDist = metrics::ManhattanDistance<T>(queryset.items[q_id]->data, dataset.items[ln_id]->data, 784);
+      lsh_distance_sum += lshDist;
+      lshDistVec.push_back((double)lshDist);
+
+      int redDist = metrics::ManhattanDistance<T>(queryset.items[q_id]->data, dataset.items[rn_id]->data, 784);
+      reduced_distance_sum += redDist;
+      redDistVec.push_back((double)redDist);
+    }
+
+    // Set output variables
+    output.true_distance = trueDistVec;
+    output.lsh_distance = lshDistVec;
+    output.reduced_distance = redDistVec;
+
+    output.lsh_approx = lsh_distance_sum / true_distance_sum;
+    output.reduced_approx = reduced_distance_sum / true_distance_sum;
   }
 }
