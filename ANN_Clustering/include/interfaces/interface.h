@@ -52,6 +52,14 @@ namespace interface
     T** images = NULL;
   };
 
+  /* struct used to define a set containing labels for classes */
+  template <typename T>
+  struct Labelset
+  {
+    uint32_t magic_number = 0;
+    uint32_t number_of_labels = 0;
+    T* labels = NULL;
+  };
 
   /* struct used to move around the Dataset */
   template <typename T>
@@ -140,6 +148,49 @@ namespace interface
         {
           dataset.images[i][data_point] = ntohs(dataset.images[i][data_point]);
         }
+      }
+    }
+
+    /* everything is done, close the file and return */
+    input_file.close();
+    return 1;
+  }
+
+
+  /* function used to parse the set containing labels */
+  template <typename T>
+  int ParseLabelset(const std::string& filename, Labelset<T>& labelset, ExitCode& status, bool values_in_big_endian=false)
+  {
+    /* create an ifstream item to open and navigate the file */
+    std::ifstream input_file(filename, std::ios::binary);
+
+    /* make sure that the file successfully opened */
+    if (!input_file.is_open())
+    {
+      status = INVALID_INFILE_PATH;
+      return 0;
+    }
+
+    /* temp variables to read input from the file */
+    uint32_t temp_big_endian;
+
+    /* read the magic number and the number of labels */
+    input_file.read((char *) &(temp_big_endian), sizeof(temp_big_endian));
+    labelset.magic_number = ntohl(temp_big_endian);
+
+    input_file.read((char *) &(temp_big_endian), sizeof(temp_big_endian));
+    labelset.number_of_labels = ntohl(temp_big_endian);
+
+    /* initialize the images (pixels array) */
+    labelset.labels = new T[labelset.number_of_labels];
+
+    /* iterate through the array to allocate space for the pixels of each image, while reading the image at the same time */
+    for (int label = 0; label < labelset.number_of_labels; label++)
+    {
+      input_file.read((char *) &labelset.labels[label], sizeof(T));
+      if (values_in_big_endian)
+      {
+        labelset.labels[label] = ntohs(labelset.labels[label]);
       }
     }
 
