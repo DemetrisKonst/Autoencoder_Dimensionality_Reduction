@@ -224,71 +224,39 @@ public:
 
 
   /*
-  The following function creates a KNNOutput object.
+  The following function sets some properties of a SearchOutput object.
   This object contains all information required to create the output file.
-  This is used only on ANN (not clustering) and also requires that its brute force
-  counterpart will be executed (so as to compare times and distances).
   */
-  void buildOutput (interface::output::KNNOutput& output, interface::Dataset<T>& query, int N, double R, int thresh = 0) {
-    // A vector of all neighbors' ids returned by kNN for each query item
-    std::vector<std::vector<int>> neighborIdVec;
-    // The distances of the aforementioned neighbors to the query item
-    std::vector<std::vector<double>> distVec;
-    // The total time kNN took to calculate the k nearest neighbors
+  void buildOutput (interface::output::SearchOutput& output, interface::Dataset<T>& query) {
+    // A vector containing the nearest neighbor ids of all query items
+    std::vector<int> nnIdVec;
+    // The true distances of the nearest neighbor of each query item
     std::vector<double> timeVec;
-    // A vector of all neighbors' ids returned by RangeSearch for each query item
-    std::vector<std::vector<int>> rsIdVec;
+    double total_time = 0.0;
 
-    // For each query item
+    // For each query item...
     for (int i = 0; i < query.number_of_images; i++) {
-      // Initialize temporary vectors to be added into neighborIdVec & distVec
-      std::vector<int> tmpNVec;
-      std::vector<double> tmpDistVec;
-
       // Execute kNN and calculate time elapsed
       clock_t begin = clock();
 
-      std::vector<std::pair<int, Item<T>*>> kNNRes = kNN(query.images[i], N, thresh);
+      std::vector<std::pair<int, Item<T>*>> kNNRes = kNN(query.images[i], 1);
 
       clock_t end = clock();
       double elapsed = double(end - begin) / CLOCKS_PER_SEC;
+      total_time += elapsed;
 
-      // For every neighbor returned, add information to its respective vector
-      for (int j = 0; j < kNNRes.size(); j++) {
-        if (!kNNRes[j].second->null) {
-          tmpNVec.push_back(kNNRes[j].second->id);
-          tmpDistVec.push_back((double) kNNRes[j].first);
-        }
-      }
-
-      // Initalize temporary vector to be added into rsIdVec
-      std::vector<int> tmpRsVec;
-
-      // Execute RangeSearch
-      std::vector<std::pair<int, Item<T>*>> rsRes = RangeSearch(query.images[i], R, thresh);
-
-      // Add all neighbor ids into tmpRsVec
-      for (int j = 0; j < rsRes.size(); j++) {
-        if (!rsRes[j].second->null) {
-          tmpRsVec.push_back(rsRes[j].second->id);
-        }
-      }
+      // Push the relevant data to the vectors
+      nnIdVec.push_back( (int) kNNRes[0].second->id);
+      timeVec.push_back(elapsed);
 
       if ((i+1)%1000 == 0)
         std::cout << "LSH: " << i+1 << " query items..." << '\n';
-
-      // Push all temporary vectors into their "parent" vectors
-      neighborIdVec.push_back(tmpNVec);
-      distVec.push_back(tmpDistVec);
-      timeVec.push_back(elapsed);
-      rsIdVec.push_back(tmpRsVec);
     }
 
-    // Set the following KNNOutput's attributes to the vectors created above
-    output.n_neighbors_id = neighborIdVec;
-    output.approx_distance = distVec;
-    output.approx_time = timeVec;
-    output.r_near_neighbors_id = rsIdVec;
+    // Set the following SearchOutput's attributes to the vectors created above
+    output.lsh_neighbors_id = nnIdVec;
+    output.lsh_time = timeVec;
+    output.lsh_total_time = total_time;
   }
 };
 

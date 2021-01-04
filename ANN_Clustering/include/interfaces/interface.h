@@ -169,69 +169,77 @@ namespace interface
   namespace output
   {
     /* struct used to group the output data */
-    typedef struct KNNOutput
+    typedef struct SearchOutput
     {
       uint32_t n;
-      std::string method;
-      std::vector<int> query_id;    // item id
-      std::vector<std::vector<int>> n_neighbors_id;     // knn neighbors item id
-      std::vector<std::vector<double>> approx_distance; // knn distance
-      std::vector<std::vector<double>> true_distance;   // real distance
-      std::vector<double> approx_time;  //time to complete kNN for 1 query
+      // IDs of query items
+      std::vector<int> query_id;
+
+      // IDs of NNs from query
+      std::vector<int> reduced_neighbors_id;
+      std::vector<int> lsh_neighbors_id;
+      std::vector<int> true_neighbors_id;
+
+      // Distances of NNs from query
+      std::vector<double> reduced_distance;
+      std::vector<double> lsh_distance;
+      std::vector<double> true_distance;
+
+      // Singular time to find NN for one query
+      std::vector<double> reduced_time;
+      std::vector<double> lsh_time;
       std::vector<double> true_time;
-      std::vector<std::vector<int>> r_near_neighbors_id; // item id of range search neighbors
-    } KNNOutput;
+
+      // Total times to find NNs for all queries
+      double reduced_total_time;
+      double lsh_total_time;
+      double true_total_time;
+
+      // Approximation factors for LSH and Reduced space
+      double lsh_approx;
+      double reduced_approx;
+    } SearchOutput;
 
     /* function to write the output of LSH/HC to a file */
-    int writeOutput(const std::string& outfile_name, KNNOutput& output, ExitCode& status)
+    int writeOutput(const std::string& outfile_name, SearchOutput& output, ExitCode& status)
     {
       /* create in ifstream object to open the output file */
       std::ofstream outfile;
       outfile.open(outfile_name, std::ios::out | std::ios::trunc);
-
       /* make sure that the file successfully opened */
       if (!outfile.is_open())
       {
         status = INVALID_OUTFILE_PATH;
         return 0;
       }
-
       /* main loop to write the result for each query in the query set */
       for (int i = 0; i < output.n; i++)
       {
-        /* log the number in the query set of the i-th query image */
         outfile << "Query: " << output.query_id[i] + 1 << std::endl;
 
-        /* log info for N Nearest-Neighbors */
-        uint32_t N = output.n_neighbors_id[i].size();
 
-        for (int j = 0; j < N; j++)
-        {
-          outfile << "Nearest neighbor-" << j + 1 << ": " << output.n_neighbors_id[i][j] << std::endl;
-          outfile << "distance" << output.method << ": " << output.approx_distance[i][j] << std::endl;
-          outfile << "distanceTrue: " << output.true_distance[i][j] << std::endl;
-        }
+        outfile << "Nearest neighbor Reduced: " << output.reduced_neighbors_id[i] << std::endl;
+        outfile << "Nearest neighbor LSH: " << output.lsh_neighbors_id[i] << std::endl;
+        outfile << "Nearest neighbor True: " << output.true_neighbors_id[i] << std::endl;
 
-        /* write the info for the execution times */
-        outfile << "t" << output.method << ": " << output.approx_time[i] << std::endl;
+        outfile << "distanceReduced: " << output.reduced_distance[i] << std::endl;
+        outfile << "distanceLSH: " << output.lsh_distance[i] << std::endl;
+        outfile << "distanceTrue: " << output.true_distance[i] << std::endl;
 
+        outfile << "tReduced: " << output.reduced_time[i] << std::endl;
+        outfile << "tLSH: " << output.lsh_time[i] << std::endl;
         outfile << "tTrue: " << output.true_time[i] << std::endl;
 
-        /* log information about R-near neighbors */
-        outfile << "R-near neighbors" << std::endl;
-
-        uint32_t neighbors = output.r_near_neighbors_id[i].size();
-
-        for (int j = 0; j < neighbors; j++)
-        {
-          outfile << output.r_near_neighbors_id[i][j] << std::endl;
-        }
-
-        /* put a newline between each query */
         outfile << std::endl;
       }
 
-      /* everything is done, close the file and return */
+      outfile << "Reduced Total Time: " << output.reduced_total_time << std::endl;
+      outfile << "LSH Total Time: " << output.lsh_total_time << std::endl;
+      outfile << "True Total Time: " << output.true_total_time << std::endl;
+
+      outfile << "Approximation Factor Reduced: " << output.reduced_approx << std::endl;
+      outfile << "Approximation Factor LSH: " << output.lsh_approx << std::endl;
+
       outfile.close();
       return 1;
     }
