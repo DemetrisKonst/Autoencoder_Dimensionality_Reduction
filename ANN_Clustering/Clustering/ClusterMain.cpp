@@ -3,11 +3,6 @@
 #include "../include/Clustering/clustering.hpp"
 
 
-/* execution:
-
-
-*/
-
 
 int main(int argc, char const *argv[])
 {
