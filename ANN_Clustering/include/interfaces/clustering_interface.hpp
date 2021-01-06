@@ -200,26 +200,28 @@ namespace interface
     namespace clustering
     {
       /* struct used to group all the clustering output information */
-      typedef struct ClusteringOutput
+      template <typename T>
+      struct ClusteringOutput
       {
         uint16_t K = 10;
         uint16_t d = 0;
-        std::string method = "Classic";
+        std::string header = "";
         std::vector<int> cluster_sizes;
-        std::vector<uint8_t*> centroids;
+        std::vector<T*> centroids;
         double clustering_time = 0.0;
+        bool skip_until_silhouette = false;
         double* cluster_silhouettes = NULL;
         double total_silhouette = 0.0;
-        bool complete = false;
-        std::vector<Item<uint8_t>*>** items;
-      } ClusteringOutput;
+        double value_of_objective_function = 0.0;
+      };
 
       /* function that writes the desired output to the outfile */
-      int writeOutput(const std::string& outfile_name, const ClusteringOutput& output, ExitCode& status)
+      template <typename T>
+      int writeOutput(const std::string& outfile_name, const ClusteringOutput<T>& output, ExitCode& status)
       {
-        /* create in ifstream object to open the output file */
+        /* create in ifstream object to open the output file and append information to it */
         std::ofstream outfile;
-        outfile.open(outfile_name, std::ios::out | std::ios::trunc);
+        outfile.open(outfile_name, std::ios::out | std::ios::app);
 
         /* make sure that the file successfully opened */
         if (!outfile.is_open())
@@ -228,39 +230,30 @@ namespace interface
           return 0;
         }
 
-        /* log information about algorithm used */
-        outfile << "Algorithm: ";
-        if (output.method == "Classic")
-        {
-          outfile << "Lloyds";
-        }
-        else if (output.method == "LSH")
-        {
-          outfile << "Range Search LSH";
-        }
-        else
-        {
-          outfile << "Range Search Hypercube";
-        }
-        outfile << std::endl;
+        /* log header */
+        outfile << output.header << std::endl;
 
-        /* log information about clusters */
-        for (int c = 0; c < output.K; c++)
+        /* if the clusters information is to not be skipped */
+        if (!output.skip_until_silhouette)
         {
-          outfile << "Cluster-" << c + 1 << " {size: " << output.cluster_sizes[c] << " centroid: [";
-          for (int j = 0; j < output.d; j++)
+          /* log information about clusters */
+          for (int c = 0; c < output.K; c++)
           {
-            outfile << +output.centroids[c][j];
-            if (j < output.d - 1)
+            outfile << "Cluster-" << c + 1 << " {size: " << output.cluster_sizes[c] << " centroid: [";
+            for (int j = 0; j < output.d; j++)
             {
-              outfile << " ";
+              outfile << +output.centroids[c][j];
+              if (j < output.d - 1)
+              {
+                outfile << " ";
+              }
             }
+            outfile << "]}" << std::endl;
           }
-          outfile << "]}" << std::endl;
-        }
 
-        /* log information about clustering time */
-        outfile << "clustering_time: " << output.clustering_time << std::endl;
+          /* log information about clustering time */
+          outfile << "clustering_time: " << output.clustering_time << std::endl;
+        }
 
         /* log information about silhouettes */
         outfile << "Silhouette: [";
@@ -270,36 +263,13 @@ namespace interface
         }
         outfile << output.total_silhouette << "]" << std::endl;
 
+        /* log the value of the objective funtion */
+        outfile << "Value of Objective Function: " << output.value_of_objective_function << std::endl;
 
-        /* check if the -complete flag was given */
-        if (output.complete)
+        /* write also 2 newlines if this is not the last output to be appended in the file */
+        if (!output.skip_until_silhouette)
         {
-          /* if yes, print the centroid and the images in it of each cluster */
-          outfile << std::endl;
-          for (int c = 0; c < output.K; c++)
-          {
-            outfile << "Cluster-" << c + 1 << " {[";
-            for (int j = 0; j < output.d; j++)
-            {
-              outfile << +output.centroids[c][j];
-              if (j < output.d - 1)
-              {
-                outfile << " ";
-              }
-            }
-            outfile << "], ";
-            for (int i = 0; i < output.items[c]->size(); i++)
-            {
-              Item<uint8_t>* item = (*output.items[c])[i];
-              outfile << item->id;
-              if (i < output.items[c]->size() - 1)
-              {
-                outfile << ", ";
-              }
-            }
-            outfile << "}" << std::endl;
-          }
-
+          outfile << "\n\n";
         }
 
         /* everything is done, close the outfile and return */

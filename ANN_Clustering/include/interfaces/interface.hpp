@@ -69,7 +69,7 @@ namespace interface
   {
     uint16_t K = 10;
     std::vector<uint32_t> sizes;
-    std::vector<std::vector<uint16_t>> images_in_clusters;
+    std::vector<std::vector<uint32_t>> images_in_clusters;
   } Clusterset;
 
   /* struct used to move around the Dataset */
@@ -252,7 +252,7 @@ namespace interface
 
 
       /* now start matching for the image IDs */
-      std::vector<uint16_t> images;
+      std::vector<uint32_t> images;
       while(std::regex_search(line, matches, reg))
       {
         images.push_back(stoi(matches[0]));

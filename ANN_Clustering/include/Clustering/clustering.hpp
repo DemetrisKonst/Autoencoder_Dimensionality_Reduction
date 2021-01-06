@@ -13,6 +13,10 @@
 #include <functional>
 #include <utility>
 #include <unordered_map>
+#include <memory>
+#include <cstdio>
+#include <cassert>
+#include <functional>
 
 #include "../interfaces/clustering_interface.hpp"
 #include "../interfaces/LSH_interface.hpp"
@@ -496,6 +500,24 @@ namespace clustering
     }
 
 
+    /* method used to initialize all the cluster centers to the 0 vector */
+    void _initialize_centers_to_zero(const interface::Data<T>& data)
+    {
+      /* array of zeros */
+      T* zeros = new T[data.dimension];
+      std::memset(zeros, 0, sizeof(T) * data.dimension);
+
+      /* initialize all the centroids */
+      for (size_t c = 0; c < K; c++)
+      {
+        centers[c] = new ClusterCenter<T>(zeros, data.dimension);
+      }
+
+      /* de-allocate the memory for the zeros vector */
+      delete[] zeros;
+    }
+
+
     /* method that clears the cluster centers so that they can get new data points assigned */
     void _clear_centers(void)
     {
@@ -622,6 +644,29 @@ namespace clustering
     }
 
 
+    /* method used to initialize the centroids from pre assigned images in clusters */
+    void _build_from_pre_assigned(const interface::Data<T>& data, const interface::Clusterset& clusterset)
+    {
+      /* loop for each cluster center */
+      for (size_t c = 0; c < K; c++)
+      {
+        /* loop for each item in each cluster */
+        for (size_t id = 0; id < clusterset.images_in_clusters[c].size(); id++)
+        {
+          /* get the item */
+          uint32_t item_id = clusterset.images_in_clusters[c][id];
+          Item<T>* item = data.items[item_id];
+          /* add it in the cluster center */
+          centers[c]->add_to_cluster(item);
+        }
+      }
+
+      /* compute the new components of each cluster center from the items added in it */
+      bool center_changed = false;
+      _update_step(&center_changed);
+    }
+
+
     /* method that performs the update step in the clustering procedure */
     void _update_step(bool* center_changed)
     {
@@ -684,6 +729,28 @@ namespace clustering
     }
 
 
+    /* method to compute the value of the objective function of the clustering */
+    double _objective_function_value(void)
+    {
+      /* variable to store the value of the objective function */
+      double sum = 0.0;
+
+      /* loop for each cluster center */
+      for (size_t c = 0; c < K; c++)
+      {
+        std::vector<Item<T>*>* data_points_in_cluster = centers[c]->get_vectors_inside_cluster();
+
+        for (size_t data_point = 0; data_point < data_points_in_cluster->size(); data_point++)
+        {
+          Item<T>* item = (*data_points_in_cluster)[data_point];
+          sum += centers[c]->distance_to_point(item);
+        }
+      }
+
+      return sum;
+    }
+
+
   public:
 
     /* constructor used to build the object from a given dataset, using initialization++ */
@@ -700,9 +767,16 @@ namespace clustering
 
     /* constructor used to build the object using a given labelset */
     Clustering(const interface::input::clustering::ClusteringConfig& configuration,
-               const interface::Data<T>& data, const interface::Labelset<uint8_t>& labels): K(configuration.clusters_K)
+               const interface::Data<T>& data, const interface::Clusterset& clusterset): K(configuration.clusters_K)
     {
-
+      /* create a vector that will be used to store the silhouettes */
+      silhouettes = new std::vector<double>;
+      /* create K pointers to Cluster Centers (basically K centers) */
+      centers = new ClusterCenter<T>*[K];
+      /* initialize all cluster centers to the 0 vector */
+      _initialize_centers_to_zero(data);
+      /* create the cluster from the pre-assigned clusterset */
+      _build_from_pre_assigned(data, clusterset);
     }
 
 
@@ -724,7 +798,7 @@ namespace clustering
 
 
     /* method to call the correct clustering algorithm */
-    void perform_clustering(const interface::Data<T>& data, const std::string& method, double* duration)
+    void perform_clustering(const interface::Data<T>& data, double* duration)
     {
       /* keep a flag that will be used to determine whether a change was made to any cluster center */
       bool center_changed = true;
@@ -747,7 +821,7 @@ namespace clustering
         _unmark_data_points(data);
 
         /* classic method for assignment */
-        Lloyd_Assignment(data);
+        _Lloyd_Assignment(data);
 
         // /* print the centroids to see that they look like */
         // for (int c = 0; c < K; c++)
@@ -771,8 +845,34 @@ namespace clustering
     }
 
 
+    /* method to buuld a clusterset object from a clustering */
+    void build_clusterset(interface::Clusterset& clusterset)
+    {
+      /* initialize K */
+      clusterset.K = K;
+
+      /* loop to fill the vectors */
+      for (size_t c = 0; c < K; c++)
+      {
+        /* add the size */
+        uint32_t size = centers[c]->get_cluster_size();
+        clusterset.sizes.push_back(size);
+
+        /* add the IDs of the images */
+        std::vector<uint32_t> ids;
+        std::vector<Item<T>*>* vectors_inside_cluster = centers[c]->get_vectors_inside_cluster();
+        for (size_t data_point = 0; data_point < size; data_point++)
+        {
+          Item<T>* item = (*vectors_inside_cluster)[data_point];
+          ids.push_back(item->id);
+        }
+        clusterset.images_in_clusters.push_back(ids);
+      }
+    }
+
+
     /* method used to compute silhouette of a clustering */
-    double compute_average_silhouette(const interface::Data<T>& data)
+    void compute_silhouettes(const interface::Data<T>& data)
     {
       /* create an array to store the silhouette value of each data point, and after transfer it to the silhouettes vector */
       double* s = new double[data.n];
@@ -799,9 +899,6 @@ namespace clustering
 
       /* free the silhouettes array */
       delete[] s;
-
-      /* return the result */
-      return average_silhouette;
     }
 
 
@@ -904,30 +1001,30 @@ namespace clustering
     }
 
 
-    // /* method used to build the output object that will be "written" in the outfile */
-    // void build_output(interface::output::clustering::ClusteringOutput& output, const interface::Data<T>& data, interface::input::clustering::ClusteringInput& input, const double& clustering_time)
-    // {
-    //   /* assign the correct values to the fields */
-    //   output.K = K;
-    //   output.d = data.dimension;
-    //   output.method = input.algorithm;
-    //   output.cluster_sizes = get_cluster_sizes();
-    //   output.centroids = get_centroids_components();
-    //   output.clustering_time = clustering_time;
-    //   output.cluster_silhouettes = get_silhouettes();
-    //   output.total_silhouette = silhouette;
-    //   output.complete = input.complete;
-    //   output.items = get_items_per_cluster();
-    // }
-    //
-    //
-    // /* method that frees the memory which the get_items_per_cluster() created */
-    // void free_output_object_memory(interface::output::clustering::ClusteringOutput& output)
-    // {
-    //   /* delete the arrays */
-    //   delete[] output.cluster_silhouettes;
-    //   delete[] output.items;
-    // }
+    /* method used to build the output object that will be "written" in the outfile */
+    void build_output(interface::output::clustering::ClusteringOutput<T>& output, const interface::Data<T>& data,
+                      const std::string& header, const double& clustering_time, const bool& skip_until_silhouette)
+    {
+      /* assign the correct values to the fields */
+      output.K = K;
+      output.d = data.dimension;
+      output.header = header;
+      output.cluster_sizes = get_cluster_sizes();
+      output.centroids = get_centroids_components();
+      output.clustering_time = clustering_time;
+      output.skip_until_silhouette = skip_until_silhouette;
+      output.cluster_silhouettes = get_silhouettes();
+      output.total_silhouette = silhouette;
+      output.value_of_objective_function = _objective_function_value();
+    }
+
+
+    /* method that frees the memory which the get_items_per_cluster() created */
+    void free_output_object_memory(interface::output::clustering::ClusteringOutput<T>& output)
+    {
+      /* delete the arrays */
+      delete[] output.cluster_silhouettes;
+    }
   };
 }
 

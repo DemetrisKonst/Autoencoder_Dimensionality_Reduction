@@ -3,7 +3,7 @@
 template <typename T>
 struct Item {
   // Unique identifier for each item
-  long int id;
+  uint32_t id;
   // Actual data
   T* data;
   // Flag for reverse assignment
@@ -21,7 +21,7 @@ struct Item {
     null = true;
   }
 
-  Item (long int id, T* data, bool st = false, bool md = false) : id(id), data(data), staged(st), marked(md) {
+  Item (uint32_t id, T* data, bool st = false, bool md = false) : id(id), data(data), staged(st), marked(md) {
     null = false;
   }
 
