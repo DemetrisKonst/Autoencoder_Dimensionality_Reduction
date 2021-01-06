@@ -38,6 +38,10 @@ def main(args):
     X = parse_dataset(args.data)
     Y = parse_labelset(args.datalabels)
 
+    clusters = separate_to_clusters(Y)
+    produce_label_file(clusters, args.output_path)
+    return
+
     rows = X.shape[1]
     columns = X.shape[2]
 
@@ -92,9 +96,10 @@ def main(args):
     Y_prob = classifier.predict(X)
     Y_pred = np.round(Y_prob)
     Y_unbin = np.argmax(Y_pred, 1)
-    produce_label_file(Y_unbin, args.output_path)
-    Yy = parse_labelset(args.output_path)
-    print(Yy[10:20])
+    clusters = separate_to_clusters(Y_unbin)
+    # produce_label_file(Y_unbin, args.output_path)
+    # Yy = parse_labelset(args.output_path)
+    # print(Yy[10:20])
 
 
 if __name__ == "__main__":

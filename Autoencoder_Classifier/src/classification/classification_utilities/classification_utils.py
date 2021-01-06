@@ -156,13 +156,23 @@ def show_results(classifier, X_test, Y_test):
     plot_example_images("Correct Predictions", images_correct, im_c_label, im_c_pred)
     plot_example_images("Incorrect Predictions", images_incorrect, im_inc_label, im_inc_pred)
 
-def produce_label_file(Y, file_path):
-    item_amount = len(Y)
-    file = open(file_path, 'w+b')
+def separate_to_clusters(Y):
+    clusters = [[] for i in range(10)]
 
-    file.write(struct.pack(">II", 80085, item_amount))
+    for i in range(len(Y)):
+        clusters[Y[i]].append(i)
 
-    for label in Y:
-        file.write(struct.pack(">B", label))
+    return clusters
+
+def produce_label_file(clusters, file_path):
+    file = open(file_path, 'w+')
+
+    for i in range(len(clusters)):
+        file.write("CLUSTER-{} {{ size: {}".format(i+1, len(clusters[i])))
+
+        for index in clusters[i]:
+            file.write(", {}".format(index))
+
+        file.write("}\n")
 
     file.close()
