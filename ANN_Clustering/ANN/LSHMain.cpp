@@ -2,7 +2,7 @@
 #include <chrono>
 #include <utility>
 
-#include "../include/interfaces/LSH_interface.h"
+#include "../include/interfaces/LSH_interface.hpp"
 #include "../include/BruteForce/BruteForce.hpp"
 #include "../include/LSH/LSH.hpp"
 #include "../include/utils/ANN.hpp"

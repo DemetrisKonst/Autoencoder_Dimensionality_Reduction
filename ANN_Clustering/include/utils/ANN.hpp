@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "../interfaces/interface.h"
+#include "../interfaces/interface.hpp"
 #include "../metrics/metrics.hpp"
 #include "../LSH/LSHFun.hpp"
 

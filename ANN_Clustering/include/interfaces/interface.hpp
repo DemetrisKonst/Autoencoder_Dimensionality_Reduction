@@ -9,13 +9,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <regex>
 #include <arpa/inet.h>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include <limits>
 
-#include "interface_utils.h"
+#include "interface_utils.hpp"
 #include "../core/item.hpp"
 
 
@@ -37,6 +38,8 @@ namespace interface
   typedef struct IOCFiles
   {
     std::string input_file = "";
+    std::string reduced_input_file = "";
+    std::string labels_file = "";
     std::string configuration_file = "";
     std::string output_file = "";
   } IOCFiles;
@@ -60,6 +63,14 @@ namespace interface
     uint32_t number_of_labels = 0;
     T* labels = NULL;
   };
+
+  /* struct used to define the contents of a file containing pre-assigned clusters */
+  typedef struct Clusterset
+  {
+    uint16_t K = 10;
+    std::vector<uint32_t> sizes;
+    std::vector<std::vector<uint16_t>> images_in_clusters;
+  } Clusterset;
 
   /* struct used to move around the Dataset */
   template <typename T>
@@ -109,7 +120,7 @@ namespace interface
     /* make sure that the file successfully opened */
     if (!input_file.is_open())
     {
-      status = INVALID_INFILE_PATH;
+      status = INVALID_DATASET_PATH;
       return 0;
     }
 
@@ -167,7 +178,7 @@ namespace interface
     /* make sure that the file successfully opened */
     if (!input_file.is_open())
     {
-      status = INVALID_INFILE_PATH;
+      status = INVALID_LABELSET_PATH;
       return 0;
     }
 
@@ -196,6 +207,71 @@ namespace interface
 
     /* everything is done, close the file and return */
     input_file.close();
+    return 1;
+  }
+
+
+  /* function used to parse a file containing pre-assigned clusters per image */
+  int ParseClusterset(const std::string& filename, Clusterset& clusterset, const uint16_t& K, ExitCode& status)
+  {
+    /* create in ifstream object to read the input from the cluster set file */
+    std::ifstream clusters_file(filename);
+
+    /* make sure that the file successfully opened */
+    if (!clusters_file.is_open())
+    {
+      status = INVALID_CLUSTERSET_PATH;
+      return 0;
+    }
+
+    /* initialize the vectors of the clusterset */
+    clusterset.K = K;
+
+    /* create a variable to read lines from the file */
+    std::string line = "ALFZ FYGE";
+
+    /* create a regex to match all integer values */
+    std::regex reg("[0-9]+");
+
+    /* for every cluster */
+    for (size_t i = 0; i < K; i++)
+    {
+      /* smatch object */
+      std::smatch matches;
+
+      /* match all numbers and remove the first number which is the cluster number */
+      std::getline(clusters_file, line);
+      std::regex_search(line, matches, reg);
+      line = matches.suffix().str();
+
+      /* match again to get the size, and remove it */
+      std::regex_search(line, matches, reg);
+      uint32_t size = stoi(matches[0]);
+      clusterset.sizes.push_back(size);
+      line = matches.suffix().str();
+
+
+      /* now start matching for the image IDs */
+      std::vector<uint16_t> images;
+      while(std::regex_search(line, matches, reg))
+      {
+        images.push_back(stoi(matches[0]));
+        line = matches.suffix().str();
+      }
+
+      /* perform a sanity check */
+      if (size != images.size())
+      {
+        status = INVALID_SIZE_IN_CLUSTERSET;
+        return 0;
+      }
+
+      /* add the labels to the clusterset object */
+      clusterset.images_in_clusters.push_back(images);
+    }
+
+    /* everythind is done, close the file and return */
+    clusters_file.close();
     return 1;
   }
 

@@ -14,13 +14,11 @@
 #include <utility>
 #include <unordered_map>
 
-#include "../interfaces/clustering_interface.h"
-#include "../interfaces/LSH_interface.h"
+#include "../interfaces/clustering_interface.hpp"
+#include "../interfaces/LSH_interface.hpp"
 #include "../metrics/metrics.hpp"
 #include "../core/item.hpp"
 #include "../utils/cluster.hpp"
-#include "../LSH/LSH.hpp"
-#include "../Hypercube/Hypercube.hpp"
 #include "../utils/ANN.hpp"
 
 
@@ -420,17 +418,10 @@ namespace clustering
 
   private:
     uint16_t K;
-    uint8_t LSH_L = 3;
-    uint8_t LSH_k = 4;
-    uint32_t HC_M = 10;
-    uint8_t HC_k = 3;
-    uint16_t HC_probes = 2;
     double radius = 0.0;
     double silhouette = 0.0;
     ClusterCenter<T>** centers;
     std::vector<double>* silhouettes;
-    LSH<T>* lsh;
-    Hypercube<T>* hypercube;
 
 
     /* helper method to compute the min distances of each data point to any center */
@@ -501,61 +492,6 @@ namespace clustering
 
         /* increment the number of centers */
         current_centers++;
-      }
-    }
-
-
-    /* method used to initialize useful data structures (LSH or Hypercube) */
-    void _initialize_data_structures(const interface::Data<T>& data, const std::string& method)
-    {
-      /* check which object to initialize, depending on the method desired */
-      if (method == "LSH")
-      {
-        /* check if this is not the first time initializing an LSH object */
-        if (lsh != NULL)
-        {
-          delete lsh;
-        }
-
-        /* create an LSH input object */
-        interface::input::LSH::LSHInput lsh_input;
-        /* assign the values that were given in the configuration file */
-        lsh_input.k = LSH_k;
-        lsh_input.L = LSH_L;
-        radius = lsh_input.R / 2;
-
-        /* compute the window size for LSH */
-        double average_item_distance = utils::averageDistance(0.05, data.items, data.n, data.dimension);
-        uint32_t window_constant = 1;
-        uint32_t window_size = (int) (window_constant * average_item_distance);
-        /* initialize the LSH object with a specific window size */
-        lsh = new LSH<T>(lsh_input, data, window_size);
-      }
-      else if (method == "Hypercube")
-      {
-        /* check if this is not the first time initializing a Hypercube object */
-        if (hypercube != NULL)
-        {
-          delete hypercube;
-        }
-
-        /* create an Hypercube input object */
-        interface::input::HC::HCInput hc_input;
-        /* assign the values that were given in the configuration file */
-        hc_input.k = HC_k;
-        hc_input.M = HC_M;
-        hc_input.probes = HC_probes;
-        radius = hc_input.R / 2;
-
-        /* compute the window size for Hypercube */
-        double average_item_distance = utils::averageDistance(0.05, data.items, data.n, data.dimension);
-        uint32_t window_constant = 1;
-        uint32_t window_size = (int) (window_constant * average_item_distance);
-        std::pair<double, double> mean_dev = utils::calculateMeanDeviation(1, data.items, data.n, data.dimension, HC_k, window_size);
-        uint32_t f_min = floor(mean_dev.first - mean_dev.second);
-        uint32_t f_max = floor(mean_dev.first + mean_dev.second);
-        /* initialize the Hypercube object */
-        hypercube = new Hypercube<T>(hc_input, data, window_size, std::make_pair(f_min, f_max));
       }
     }
 
@@ -686,122 +622,6 @@ namespace clustering
     }
 
 
-    /* method that implements Reverse Assignment with LSH or HC Algorithm for Clustering */
-    void _Reverse_Assignment(const interface::Data<T>& data, const std::string& method, const uint16_t& max_iterations=3)
-    {
-      /* define some variables used for the stopping conditions */
-      uint16_t iterations = 0;
-      uint16_t balls_changed = 0;
-
-      /* keep iterating (doubling the radius and performing range search) until stopping conditions are met */
-      do
-      {
-        /* create a vector to temporarily store the assigned cluster for each data point in order to resolve conflicts */
-        std::unordered_map<uint32_t, std::pair<uint16_t, Item<T>*>> assigned_clusters;
-
-        /* reset the number *balls* that got points */
-        balls_changed = 0;
-
-        /* for each cluster */
-        for (uint16_t c = 0; c < K; c++)
-        {
-          /* define a variable to store the result of the Range Search */
-          std::vector<std::pair<int, Item<T>*>> ret;
-
-          /* determine which method to perform Range Search with */
-          if (method == "LSH")
-          {
-            /* perform range search */
-            ret = lsh->RangeSearch(centers[c]->get_components(), radius);
-          }
-          else
-          {
-            /* perform range search */
-            ret = hypercube->RangeSearch(centers[c]->get_components(), radius, HC_probes, 15000);
-          }
-
-          /* if this ball gets at least one point, increment the counter */
-          if (ret.size() > 0)
-          {
-            balls_changed++;
-          }
-
-          /* add the items of the range search to the cluster */
-          for (int i = 0; i < ret.size(); i++)
-          {
-            /* get the item as a variable to make code more readable */
-            Item<T>* item = ret[i].second;
-
-            /* if the item is not staged */
-            if (!item->staged)
-            {
-              /* make it staged because it was found by this query search */
-              item->staged = true;
-              /* create a pair with (cluster, item) in order to assign it to the cluster */
-              std::pair<uint16_t, Item<T>*> pair = std::make_pair(c, item);
-              /* assign it temporarily to the current cluster */
-              assigned_clusters[item->id] = pair;
-            }
-            /* else, the item as already staged, so we have to resolve a confict */
-            else
-            {
-              /* get the cluster that was closer so far */
-              uint16_t closest_cluster_so_far = assigned_clusters[item->id].first;
-              /* compute the distance to it */
-              double distance_to_previous_cluster = (double) metrics::ManhattanDistance(item->data, centers[closest_cluster_so_far]->get_components(), data.dimension);
-              /* compute the distance to the current cluster */
-              double distance_to_current_cluster = (double) metrics::ManhattanDistance(item->data, centers[c]->get_components(), data.dimension);
-
-              /* if the distance to the current cluster is smaller that the distance to the previously closest */
-              if (distance_to_current_cluster < distance_to_previous_cluster)
-              {
-                /* create a pair with (cluster, item) in order to assign it to the cluster */
-                std::pair<uint16_t, Item<T>*> pair = std::make_pair(c, item);
-                /* assign this item to the current cluster since its closer */
-                assigned_clusters[item->id] = pair;
-              }
-            }
-
-          }
-
-        }
-
-        /* traverse the unordered map, */
-        for (auto x : assigned_clusters)
-        {
-          /* get the value of the specific key in the unordered map */
-          std::pair<uint16_t, Item<T>*> pair = x.second;
-          /* get the closest cluster found */
-          uint16_t closest_cluster = pair.first;
-          /* get the item */
-          Item<T>* item = pair.second;
-
-          /* unstage the item */
-          item->staged = false;
-          /* mark the item because it will be added in a cluster */
-          item->marked = true;
-          /* assign point to its closest luster */
-          centers[closest_cluster]->add_to_cluster(item);
-        }
-
-        /* double the radius */
-        radius *= 2;
-
-        /* increment the number of iterations */
-        iterations++;
-
-        /* remove "the assignment" of each data point as the iteration has ended */
-        assigned_clusters.clear();
-
-        /* until 80% of balls get new points, and max_iterations have been perfomed at least */
-      } while (balls_changed >= K * 0.2 || iterations < max_iterations);
-
-
-      /* perform Lloyds (brute force) assignment for the rest points that were not assigned */
-      _Lloyd_Assignment(data);
-    }
-
-
     /* method that performs the update step in the clustering procedure */
     void _update_step(bool* center_changed)
     {
@@ -866,17 +686,23 @@ namespace clustering
 
   public:
 
-    /* constructor used to build the object */
-    Clustering(const interface::input::clustering::ClusteringConfig& configuration, const interface::Data<T>& data):
-    K(configuration.clusters_K), LSH_L(configuration.LSH_L), LSH_k(configuration.LSH_k), HC_M(configuration.HC_M),
-    radius(0.0), HC_k(configuration.HC_k), HC_probes(configuration.HC_probes), lsh(NULL), hypercube(NULL)
+    /* constructor used to build the object from a given dataset, using initialization++ */
+    Clustering(const interface::input::clustering::ClusteringConfig& configuration,
+               const interface::Data<T>& data): K(configuration.clusters_K)
     {
       /* create a vector that will be used to store the silhouettes */
       silhouettes = new std::vector<double>;
       /* create K pointers to Cluster Centers (basically K centers) */
       centers = new ClusterCenter<T>*[K];
-      /* initialize them with initialization++ (k-means++) */
+      /* initialize them with initialization++ (k-medians++) */
       _initialize_centers(data);
+    }
+
+    /* constructor used to build the object using a given labelset */
+    Clustering(const interface::input::clustering::ClusteringConfig& configuration,
+               const interface::Data<T>& data, const interface::Labelset<uint8_t>& labels): K(configuration.clusters_K)
+    {
+
     }
 
 
@@ -894,16 +720,6 @@ namespace clustering
       }
       /* delete matrix containing them */
       delete[] centers;
-
-      /* delete the data structures that were used during clustering, if they were used */
-      if (lsh != NULL)
-      {
-        delete lsh;
-      }
-      if (hypercube != NULL)
-      {
-        delete hypercube;
-      }
     }
 
 
@@ -912,12 +728,6 @@ namespace clustering
     {
       /* keep a flag that will be used to determine whether a change was made to any cluster center */
       bool center_changed = true;
-
-      /* see if we have to use a Reverse assignment method, and if yes initialize the corresponding object */
-      if (method == "LSH" || method == "Hypercube")
-      {
-        _initialize_data_structures(data, method);
-      }
 
       /* variable used to remeber the start of the execution time */
       auto start = std::chrono::high_resolution_clock::now();
@@ -936,16 +746,8 @@ namespace clustering
         /* unmark all data point */
         _unmark_data_points(data);
 
-
-        /* determine which algorithm to use in the assignment step */
-        if (method == "Classic")
-        {
-          _Lloyd_Assignment(data);
-        }
-        else
-        {
-          _Reverse_Assignment(data, method);
-        }
+        /* classic method for assignment */
+        Lloyd_Assignment(data);
 
         // /* print the centroids to see that they look like */
         // for (int c = 0; c < K; c++)
@@ -1102,30 +904,30 @@ namespace clustering
     }
 
 
-    /* method used to build the output object that will be "written" in the outfile */
-    void build_output(interface::output::clustering::ClusteringOutput& output, const interface::Data<T>& data, interface::input::clustering::ClusteringInput& input, const double& clustering_time)
-    {
-      /* assign the correct values to the fields */
-      output.K = K;
-      output.d = data.dimension;
-      output.method = input.algorithm;
-      output.cluster_sizes = get_cluster_sizes();
-      output.centroids = get_centroids_components();
-      output.clustering_time = clustering_time;
-      output.cluster_silhouettes = get_silhouettes();
-      output.total_silhouette = silhouette;
-      output.complete = input.complete;
-      output.items = get_items_per_cluster();
-    }
-
-
-    /* method that frees the memory which the get_items_per_cluster() created */
-    void free_output_object_memory(interface::output::clustering::ClusteringOutput& output)
-    {
-      /* delete the arrays */
-      delete[] output.cluster_silhouettes;
-      delete[] output.items;
-    }
+    // /* method used to build the output object that will be "written" in the outfile */
+    // void build_output(interface::output::clustering::ClusteringOutput& output, const interface::Data<T>& data, interface::input::clustering::ClusteringInput& input, const double& clustering_time)
+    // {
+    //   /* assign the correct values to the fields */
+    //   output.K = K;
+    //   output.d = data.dimension;
+    //   output.method = input.algorithm;
+    //   output.cluster_sizes = get_cluster_sizes();
+    //   output.centroids = get_centroids_components();
+    //   output.clustering_time = clustering_time;
+    //   output.cluster_silhouettes = get_silhouettes();
+    //   output.total_silhouette = silhouette;
+    //   output.complete = input.complete;
+    //   output.items = get_items_per_cluster();
+    // }
+    //
+    //
+    // /* method that frees the memory which the get_items_per_cluster() created */
+    // void free_output_object_memory(interface::output::clustering::ClusteringOutput& output)
+    // {
+    //   /* delete the arrays */
+    //   delete[] output.cluster_silhouettes;
+    //   delete[] output.items;
+    // }
   };
 }
 

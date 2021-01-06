@@ -8,7 +8,7 @@
 #include <fstream>
 #include <arpa/inet.h>
 
-#include "../../include/interfaces/interface_utils.h"
+#include "../../include/interfaces/interface_utils.hpp"
 
 
 bool interface::FileExists(const std::string& path)
@@ -94,25 +94,17 @@ void interface::output::printImage(const uint8_t* image_vector, const uint16_t& 
 void interface::output::LSHPrintInputFormat(void)
 {
   std::cout << "The input from the command line parameters should be something like this:\n\n"
-            << "$ ./lsh -d <input_file> [-q <query_file>] [-k <int>] [-L <int>] [-o <output_file>] [-N <number of nearest>] [-R <radius>]\n\n"
-            << "Note that for the default values are k=4, L=5, N=1, R=1.0. The query and output files must be provided by the user at some point.\n"
-            << "You can type: $ ./lsh --help, to print this information at any time.\n";
-}
-
-
-void interface::output::HCUBEPrintInputFormat(void)
-{
-  std::cout << "The input from the command line parameters should be something like this:\n\n"
-            << "$ ./cube -d <input_file> [-q <query_file>] [-k <int>] [-M <int>] [-probes <int>] [-o <output_file>] [-N <number of nearest>] [-R <radius>]\n\n"
-            << "Note that for the default values are k=3, M=10, probes=2, N=1, R=1.0. The query and output files must be provided by the user at some point.\n"
-            << "You can type: $ ./cube --help, to print this information at any time.\n";
+            << "$ ./search -d <input file original space> -i <input file new space> -q <query file original space> -s <query file new space> "
+            << "-k <int> -L <int> -o <output file>\n\n"
+            << "You can type: $ ./search --help, to print this information at any time.\n";
 }
 
 
 void interface::output::clusteringShowInputFormat(void)
 {
   std::cout << "The input from the command line parameters should be something like this:\n\n"
-            << "$ ./cluster -d <input_file> -c <configuration_file> -o <output_file> [-complete] -m <method>\n\n"
+            << "$ ./cluster -d <input file original space> -i <input file new space> -n <classes from NN as clusters file> "
+            << "-c <configuration file> -o <output_file>\n\n"
             << "You can type: $ ./cluster --help, to print this information at any time.\n";
 }
 
@@ -126,9 +118,9 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
     case NO_INPUT:
     {
       std::cerr << "ERROR: Not enough input was given by the user.\n"
-                << "At least the following paths have to be provided:\n\n"
-                << "\t1) -d: Path to the original training space\n\t2) -i: Path to the reduced training space (-i)\n"
-                << "\t3) -q: Path to the original query space\n\t4) -s: Path to the reduced query space\n"
+                << "The following paths have to be provided:\n\n"
+                << "\t1) -d: Path to the original training space file\n\t2) -i: Path to the reduced training space file\n"
+                << "\t3) -q: Path to the original query space file\n\t4) -s: Path to the reduced query space file\n"
                 << "\t5) -o: Path of the output file that will be created"
                 << "\nin the command line parameters.\n";
       break;
@@ -136,7 +128,11 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
     case NO_INPUT_CLUSTERING:
     {
       std::cerr << "ERROR: Not enough input was given by the user.\n"
-                << "At least the path of the input file (dataset), the path of the configuration file and the Clustering method have to be provided in the command line parameters.\n";
+                << "The following paths have to be provided:\n\n"
+                << "\t1) -d: Path to the original training space file\n\t2) -i: Path to the reduced training space file\n"
+                << "\t3) -n: Path to the pre-assigned clusters file\n\t4) -c: Path to the configuration file\n"
+                << "\t5) -o: Path of the output file that will be created"
+                << "\nin the command line parameters.\n";
       break;
     }
     case INVALID_INPUT_LSH:
@@ -144,13 +140,6 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
       std::cerr << "ERROR: command line arguments cannot be recognized. Input is invalid.\n"
                 << "Consult below on how to execute the program.\n";
       output::LSHPrintInputFormat();
-      break;
-    }
-    case INVALID_INPUT_HCUBE:
-    {
-      std::cerr << "ERROR: command line arguments cannot be recognized. Input is invalid.\n"
-                << "Consult below on how to execute the program.\n";
-      output::HCUBEPrintInputFormat();
       break;
     }
     case INVALID_INPUT_CLUSTERING:
@@ -165,11 +154,6 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
       output::LSHPrintInputFormat();
       break;
     }
-    case HELP_MSG_HCUBE:
-    {
-      output::HCUBEPrintInputFormat();
-      break;
-    }
     case HELP_MSG_CLUSTERING:
     {
       output::clusteringShowInputFormat();
@@ -181,28 +165,10 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
                 << "Usually k is a positive int from 4 to 6 (but can range from 1 to 31).\n";
       break;
     }
-    case INVALID_K_DIM:
-    {
-      std::cerr << "ERROR: The value passed for the dimension of the Hypercube (k = d') is invalid.\n"
-                << "It should be a positive in between 0-255.\n";
-      break;
-    }
     case INVALID_L:
     {
       std::cerr << "ERROR: The value passed for the number of hast tables L is invalid."
                 << "Usually L is either 5 or 6.\n";
-      break;
-    }
-    case INVALID_M:
-    {
-      std::cerr << "ERROR: The value passed for the number of allowed candidate points to be checked, M, is invalid."
-                << "It should be a positive integer.\n";
-      break;
-    }
-    case INVALID_PROBES:
-    {
-      std::cerr << "ERROR: The value passed for maximum number of cube vertices to be checked, probes, is invalid."
-                << "It should be a positive integer.\n";
       break;
     }
     case INVALID_N:
@@ -261,6 +227,31 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
     case INVALID_CONFIG_PATH:
     {
       std::cerr << "ERROR: The path passed for the configuration file is invalid.\n";
+      break;
+    }
+    case INVALID_PRED_LABELS_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the file containing the predicted labels is invalid.\n";
+      break;
+    }
+    case INVALID_DATASET_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the file containing a dataset, is invalid.\n";
+      break;
+    }
+    case INVALID_LABELSET_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the file containing the labels of the data points, is invalid.\n";
+      break;
+    }
+    case INVALID_CLUSTERSET_PATH:
+    {
+      std::cerr << "ERROR: The path passed for the file containing the pre-assigned clusters per image, is invalid.\n";
+      break;
+    }
+    case INVALID_SIZE_IN_CLUSTERSET:
+    {
+      std::cerr << "ERROR: A size of a cluster does not match the number of images provided for it.\n";
       break;
     }
     default:

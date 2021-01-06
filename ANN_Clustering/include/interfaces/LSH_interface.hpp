@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cstdint>
 
-#include "interface.h"
+#include "interface.hpp"
 
 /* namespace regarding interface utilities */
 namespace interface
