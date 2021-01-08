@@ -1,6 +1,7 @@
 __pycache__/
 output/
 input/
+encoder/
 data/
 object/
 bin/

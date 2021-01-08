@@ -115,7 +115,7 @@ if __name__ == "__main__":
     # configure the level of the logging and the format of the messages
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s\n")
     # parse the command line input
-    args = parse_input(autoencoder=True)
+    args = parse_input()
     # call the main() driver function
     main(args)
     print("\n")

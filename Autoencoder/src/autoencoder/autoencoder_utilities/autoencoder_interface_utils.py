@@ -10,6 +10,22 @@ DEFAULT_KERNEL_SIZE = (3, 3)
 DEFAULT_FILTERS = 16
 DEFAULT_USE_THIRD_MAX_POOL = True
 
+def parse_input(arg=None, autoencoder=True):
+    """ function used to parse the command line input of the autoencoder """
+
+    # create the argument parser
+    description = "Python script that creates an autoencoder used to reduce the dimensionality " \
+                  "of the MNIST dataset."
+    parser = argparse.ArgumentParser(description=description)
+
+    # add an argument for the path of the dataset
+    help = "The full/relative path to the file containing the training examples."
+    parser.add_argument("-d", "--data", type=str, action="store", metavar="training_examples_path",
+                        required=True, help=help)
+
+    # parse the arguments and return the result
+    return parser.parse_args(arg)
+
 
 def get_number_of_convolutional_layers():
     """ function used to read the number of convolutional layers """
