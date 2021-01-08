@@ -99,12 +99,11 @@ def main(args):
                     show_graphs(histories, configurations)
 
             else:
-                # get the save paths of both models (encoder and autoencoder)
-                encoder_savepath, autoencoder_savepath = get_valid_savepaths()
+                # get the save path of the encoder model
+                encoder_savepath = get_valid_savepath()
 
-                # save both models
+                # save encoder model
                 save_keras_model(encoder, encoder_savepath)
-                save_keras_model(autoencoder, autoencoder_savepath)
 
             # get the new option from the user
             option = get_option()
