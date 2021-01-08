@@ -23,3 +23,19 @@ The Datasets used to test the correctness of our algorithms is the *MNIST Databa
 
 ## Part 1 - Dimensionality Reduction
 As stated before, this program converts a given dataset to a reduced version of it by passing it through a pretrained encoder model and taking the latent vector values produced by it. Analytically, the first part of this program is to create a viable encoder model, thankfully, the [autoencoder](Autoencoder_Classifier/src/autencoder) directory contains a program which trains an autoencoder on a given dataset and allows the user to save the encoder part of the model. Hence, we would strongly advise the encoder used to be produced from this specific program (Note: the [notebook](Autoencoder_Classifier/notebook) directory contains an almost identical colab notebook implementation of the autoencoder for easier GPU usage). After the encoder model has been saved, we are free to reduce the dimensionality of our dataset. The reduce.py file contains a local variable pointing to the encoder to-be-used which can be changed to specify the user's preference. Essentially, the dataset and queryset given as arguments are passed through the encoder model, flattened and then written to the respective output files (given as arguments). **More on usage later**.
+
+## Usage
+### Part 1
+To execute the autoencoder.py program (to produce the encoder)
+```bash
+  $ python3 autencoder.py -d dataset
+```
+You will then be prompted for the location of the encoder model to be saved at.
+There is also the option to use the colab notebook in the [notebook](Autoencoder_Classifier/notebook) directory.
+
+To specify the encoder in the reduce.py program, change the local variable named "encoder_path" with the path of the encoder you want to use.
+To execute:
+```bash
+  $ python3 reduce.py -d dataset -q queryset -od output_dataset_file -oq output_query_file
+```
+Then, the dataset & queryset produced files will be created to be used for **Part 2**
