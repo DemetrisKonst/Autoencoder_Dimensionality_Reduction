@@ -22,16 +22,24 @@ The Datasets used to test the correctness of our algorithms is the *MNIST Databa
 <br> </br>
 
 ## Part 1 - Dimensionality Reduction
-As stated before, this program converts a given dataset to a reduced version of it by passing it through a pretrained encoder model and taking the latent vector values produced by it. Analytically, the first part of this program is to create a viable encoder model, thankfully, the [autoencoder](Autoencoder_Classifier/src/autencoder) directory contains a program which trains an autoencoder on a given dataset and allows the user to save the encoder part of the model. Hence, we would strongly advise the encoder used to be produced from this specific program (Note: the [notebook](Autoencoder_Classifier/notebook) directory contains an almost identical colab notebook implementation of the autoencoder for easier GPU usage). After the encoder model has been saved, we are free to reduce the dimensionality of our dataset. The reduce.py file contains a local variable pointing to the encoder to-be-used which can be changed to specify the user's preference. Essentially, the dataset and queryset given as arguments are passed through the encoder model, flattened and then written to the respective output files (given as arguments). **More on usage later**.
+As stated before, this program converts a given dataset to a reduced version of it by passing it through a pretrained encoder model and taking the latent vector values produced by it. Analytically, the first part of this program is to create a viable encoder model, thankfully, the [autoencoder](Autoencoder/src/autencoder) directory contains a program which trains an autoencoder on a given dataset and allows the user to save the encoder part of the model. Hence, we would strongly advise the encoder used to be produced from this specific program (Note: the [notebook](Autoencoder/notebook) directory contains an almost identical colab notebook implementation of the autoencoder for easier GPU usage). After the encoder model has been saved, we are free to reduce the dimensionality of our dataset. The reduce.py file contains a local variable pointing to the encoder to-be-used which can be changed to specify the user's preference. Essentially, the dataset and queryset given as arguments are passed through the encoder model, flattened and then written to the respective output files (given as arguments).
+
+## Part 2 - Original Space/Latent Space brute force NN and LSH ANN on original space comparison
+This program accepts as input a dataset and a queryset both in the original and the reduced dimension versions of them (i.e. the output of **Part 1**). Then makes comparisons between:
+- Brute Force NN on original space.
+- Brute Force NN on reduced space.
+- LSH ANN on original space.
+
+With respect to the brute force NN on original space, approximation factors of the latter 2 approaches are calculated (based on relative distance of neighbor produced). Essentially, the original dataset is loaded into both a [BruteForce](NN_Clustering/include/BruteForce/BruteForce.hpp) class and an [LSH](NN_Clustering/include/LSH/LSH.hpp) class, alongside them, the reduced dataset is loaded into a [BruteForce](NN_Clustering/include/BruteForce/BruteForce.hpp) class. Afterwards, for each query image of the respective queryset (original/reduced) the Nearest Neighbor is calculated on all 3 models. Finally, all these calculations are written to an output file where some extra information is recorded (approximation factors, times etc.).
 
 ## Usage
 ### Part 1
-To execute the autoencoder.py program (to produce the encoder)
+To execute the autoencoder.py program (to produce the encoder), type:
 ```bash
   $ python3 autencoder.py -d dataset
 ```
 You will then be prompted for the location of the encoder model to be saved at.
-There is also the option to use the colab notebook in the [notebook](Autoencoder_Classifier/notebook) directory.
+There is also the option to use the colab notebook in the [notebook](Autoencoder/notebook) directory.
 
 To specify the encoder in the reduce.py program, change the local variable named "encoder_path" with the path of the encoder you want to use.
 To execute:
@@ -39,3 +47,22 @@ To execute:
   $ python3 reduce.py -d dataset -q queryset -od output_dataset_file -oq output_query_file
 ```
 Then, the dataset & queryset produced files will be created to be used for **Part 2**
+
+### Part 2
+To execute the search program, first make sure to use
+```bash
+  $ make SEARCH
+```
+inside the NN_Clustering directory. Afterwards, use the following command to run the program
+```bash
+  $ bin/search  –d input_file_original_space
+                -i input_file_new_space
+                –q query_file_original_space
+                -s query_file_new_space
+                –k number_of_LSH_hash_functions
+                -L number_of_LSH_hash_tables
+                -ο output_file
+```
+Then, the file containing information about the experiment will be produced to the path specified.
+
+### *[GitHub Repository](https://github.com/DemetrisKonst/Autoencoder_Dimensionality_Reduction)*
