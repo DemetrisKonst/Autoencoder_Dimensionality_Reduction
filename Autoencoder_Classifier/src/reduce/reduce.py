@@ -43,8 +43,10 @@ def main(args):
     dataset = preprocess(dataset, rows, columns)
     queryset = preprocess(queryset, rows, columns)
 
+    encoder_path = './encoders/z10.h5'
+
     # initialize model
-    model = initialize_encoder(rows, columns)
+    model = initialize_encoder(rows, columns, encoder_path)
 
     # pass the sets through the encoder
     ds_latent = model.predict(dataset)

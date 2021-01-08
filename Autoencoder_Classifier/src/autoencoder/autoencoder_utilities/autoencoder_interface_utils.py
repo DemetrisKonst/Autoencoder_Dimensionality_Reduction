@@ -207,7 +207,7 @@ def get_autoencoder_input():
     return conv_layers, kernel_sizes, filters, epochs, batch_size, use_third_maxpool
 
 
-def get_valid_savepaths():
+def get_valid_savepath():
     """ Function used to get the paths to save the encoder and autoencoder models """
 
     # ask the user to give the savepath of the encoder
@@ -221,16 +221,5 @@ def get_valid_savepaths():
         print("Wrong path, file can't be opened. Please try again.")
         savepath_encoder = input(prompt)
 
-    # ask the user to give the savepath of the autoencoder
-    prompt = "\nGive the savepath for the autoencoder model: "
-    savepath_autoencoder = input(prompt)
-
-    # keep asking until he gives a valid save path
-    while not filepath_can_be_reached(savepath_autoencoder):
-
-        # print the error and ask him again
-        print("Wrong path, file can't be opened. Please try again.")
-        savepath_autoencoder = input(prompt)
-
     # if we get here it means that both savepaths are correct, so return them
-    return savepath_encoder, savepath_autoencoder
+    return savepath_encoder
