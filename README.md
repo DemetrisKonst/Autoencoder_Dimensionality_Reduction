@@ -24,14 +24,18 @@ The Datasets used to test the correctness of our algorithms is the *MNIST Databa
 ## Part 1 - Dimensionality Reduction
 As stated before, this program converts a given dataset to a reduced version of it by passing it through a pretrained encoder model and taking the latent vector values produced by it. Analytically, the first part of this program is to create a viable encoder model, thankfully, the [autoencoder](Autoencoder/src/autencoder) directory contains a program which trains an autoencoder on a given dataset and allows the user to save the encoder part of the model. Hence, we would strongly advise the encoder used to be produced from this specific program (Note: the [notebook](Autoencoder/notebook) directory contains an almost identical colab notebook implementation of the autoencoder for easier GPU usage). After the encoder model has been saved, we are free to reduce the dimensionality of our dataset. The reduce.py file contains a local variable pointing to the encoder to-be-used which can be changed to specify the user's preference. Essentially, the dataset and queryset given as arguments are passed through the encoder model, flattened and then written to the respective output files (given as arguments).
 
-## Part 2 - Original Space/Latent Space brute force NN and LSH ANN on original space comparison
+## Part 2 - Original Space & Latent Space brute force NN and LSH ANN on original space comparison
 This program accepts as input a dataset and a queryset both in the original and the reduced dimension versions of them (i.e. the output of **Part 1**). Then makes comparisons between:
 - Brute Force NN on original space.
 - Brute Force NN on reduced space.
 - LSH ANN on original space.
-
 With respect to the brute force NN on original space, approximation factors of the latter 2 approaches are calculated (based on relative distance of neighbor produced). Essentially, the original dataset is loaded into both a [BruteForce](NN_Clustering/include/BruteForce/BruteForce.hpp) class and an [LSH](NN_Clustering/include/LSH/LSH.hpp) class, alongside them, the reduced dataset is loaded into a [BruteForce](NN_Clustering/include/BruteForce/BruteForce.hpp) class. Afterwards, for each query image of the respective queryset (original/reduced) the Nearest Neighbor is calculated on all 3 models. Finally, all these calculations are written to an output file where some extra information is recorded (approximation factors, times etc.).
 
+## Part 3 - Earth Mover's Distance & Manhattan Distance metrics comparison
+**TODO**
+
+## Part 4 - Centroid-based clustering on original & latent space and classifier based clustering comparison
+The program that implements this comparison is [cluster.cpp](NN_clustering/cluster.cpp).
 ## Usage
 ### Part 1
 To execute the autoencoder.py program (to produce the encoder), type:
