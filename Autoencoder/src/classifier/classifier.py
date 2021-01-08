@@ -9,15 +9,15 @@ from sklearn.preprocessing import LabelBinarizer
 import logging
 import sys
 sys.path.append("../utils")
-sys.path.append("classification_utilities")
+sys.path.append("classifier_utilities")
 
 from utils import *
 from interface_utils import *
-from classification_utils import *
-from classification_interface_utils import *
+from classifier_utils import *
+from classifier_interface_utils import *
 
 def main(args):
-    # first make sure that the paths to the provided dataset are valid
+    # first make sure that the paths provided are valid
     if filepath_is_not_valid(args.data):
         logging.error("The path {} is not a file. Aborting..".format(args.data))
         exit()
@@ -34,13 +34,9 @@ def main(args):
         logging.error("The path {} is not a file. Aborting..".format(args.model_path))
         exit()
 
-    # parse the data from the training and test set
+    # parse the data from the dataset
     X = parse_dataset(args.data)
     Y = parse_labelset(args.datalabels)
-
-    clusters = separate_to_clusters(Y)
-    produce_label_file(clusters, args.output_path)
-    return
 
     rows = X.shape[1]
     columns = X.shape[2]
@@ -61,7 +57,7 @@ def main(args):
     X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.15, random_state=rs, shuffle=True)
 
 
-    units, epochs, batch_size = (128, 1, 180)
+    units, epochs, batch_size = (128, 1, 64)
 
     # load the encoder
     encoder = load_keras_model(args.model_path)
@@ -93,13 +89,14 @@ def main(args):
                               shuffle=True, validation_data=(X_val, Y_val),
                               callbacks=[callback])
 
+    print("\nProducing output file...")
+
     Y_prob = classifier.predict(X)
     Y_pred = np.round(Y_prob)
     Y_unbin = np.argmax(Y_pred, 1)
-    clusters = separate_to_clusters(Y_unbin)
-    # produce_label_file(Y_unbin, args.output_path)
-    # Yy = parse_labelset(args.output_path)
-    # print(Yy[10:20])
+
+    clusters = separate_to_clusters(Y_unbin, 10)
+    produce_label_file(clusters, args.output_path)
 
 
 if __name__ == "__main__":
