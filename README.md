@@ -35,7 +35,12 @@ With respect to the brute force NN on original space, approximation factors of t
 **TODO**
 
 ## Part 4 - Centroid-based clustering on original & latent space and classifier based clustering comparison
-The program that implements this comparison is [cluster.cpp](NN_clustering/cluster.cpp).
+The program that implements this comparison is [cluster.cpp](NN_clustering/cluster.cpp). It accepts as arguments the dataset in the original space, in latent space, a configuration file (containing parameters regarding the clustering), a path to the output file and a file containing grouped images per label from the dataset produced by a classifier. We have implemented a [classifier](Autoencoder/src/classifier/classifier.py) like such that based on a pre-trained encoder classifies the images of the dataset based on the digits they represent. This file's format is:
+```
+CLUSTER-label {size: amount_of_image_ids, image_id_1, image_id_2, ..., image_id_n}
+CLUSTER-next_label {....}
+```
+You are free to use your own file (as long as it complies with the specified format). To use our classifier, at first you need to have a pre-trained encoder saved. The one created by the [autoencoder](Autencoder/src/autoencoder/autoencoder.py) used in **Part 1** works perfectly.
 ## Usage
 ### Part 1
 To execute the autoencoder.py program (to produce the encoder), type:
@@ -57,7 +62,7 @@ To execute the search program, first make sure to use
 ```bash
   $ make SEARCH
 ```
-inside the NN_Clustering directory. Afterwards, use the following command to run the program
+inside the [NN_Clustering](NN_Clustering) directory. Afterwards, use the following command to run the program
 ```bash
   $ bin/search  –d input_file_original_space
                 -i input_file_new_space
@@ -65,6 +70,29 @@ inside the NN_Clustering directory. Afterwards, use the following command to run
                 -s query_file_new_space
                 –k number_of_LSH_hash_functions
                 -L number_of_LSH_hash_tables
+                -ο output_file
+```
+Then, the file containing information about the experiment will be produced to the path specified.
+
+### Part 3
+**TODO**
+
+### Part 4
+To execute the classifier so as to produce the cluster file, type:
+```bash
+  $ python3 classifier.py -d dataset -dl dataset_labels -ol output_file -model encoder
+```
+inside the [classifier directory](Autencoder/src/classifier). Afterwards, the cluster file will have been produced in the output_path specified and we are free to execute the clustering program.
+First, make sure to use
+```bash
+  $ make CLUSTER
+```
+inside the [NN_Clustering](NN_Clustering) directory. Afterwards, use the following command to run the program
+```bash
+  $ bin/cluster  –d input_file_original_space
+                -i input_file_new_space
+                –n cluster_file
+                -c configuration_file
                 -ο output_file
 ```
 Then, the file containing information about the experiment will be produced to the path specified.
