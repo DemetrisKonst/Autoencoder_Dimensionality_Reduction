@@ -10,7 +10,7 @@
 #include "../core/item.hpp"
 #include "LSHFun.hpp"
 #include "../metrics/metrics.hpp"
-#include "../utils/ANN.hpp"
+#include "../utils/search.hpp"
 
 /*
 The following class implements the LSH data structure.

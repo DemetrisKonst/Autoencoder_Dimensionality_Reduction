@@ -19,11 +19,11 @@
 #include <functional>
 
 #include "../interfaces/clustering_interface.hpp"
-#include "../interfaces/LSH_interface.hpp"
+#include "../interfaces/search_interface.hpp"
 #include "../metrics/metrics.hpp"
 #include "../core/item.hpp"
 #include "../utils/cluster.hpp"
-#include "../utils/ANN.hpp"
+#include "../utils/search.hpp"
 
 
 /* namespace used to implement clustering algorithms */

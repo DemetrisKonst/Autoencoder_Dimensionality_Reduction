@@ -8,7 +8,7 @@
 #include <fstream>
 #include <arpa/inet.h>
 
-#include "../../include/interfaces/interface_utils.hpp"
+#include "../include/interfaces/interface_utils.hpp"
 
 
 bool interface::FileExists(const std::string& path)

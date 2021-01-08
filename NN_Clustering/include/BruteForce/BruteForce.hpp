@@ -5,11 +5,11 @@
 
 #include "../core/item.hpp"
 #include "../metrics/metrics.hpp"
-#include "../utils/ANN.hpp"
+#include "../utils/search.hpp"
 #include "../LSH/LSHFun.hpp"
 
 /*
-The following class implements a simple brute force implementation of kNN and RangeSearch
+The following class implements a simple brute force implementation of kNN
 */
 template <typename T>
 class BruteForce {
