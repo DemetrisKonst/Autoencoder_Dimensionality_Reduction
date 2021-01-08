@@ -40,7 +40,12 @@ CLUSTER-label {size: amount_of_image_ids, image_id_1, image_id_2, ..., image_id_
 CLUSTER-next_label {....}
 ```
 You are free to use your own file (as long as it complies with the specified format). To use our classifier, at first you need to have a pre-trained encoder saved. The one created by the [autoencoder](Autencoder/src/autoencoder/autoencoder.py) used in **Part 1** works perfectly.
-**TODO Andreas (add short explanation for cluster.cpp)**
+
+The clustering executable, produced from the [cluster.cpp](NN_clustering/cluster.cpp) file, uses the Clustering class which is defined in the [clustering.hpp](NN_clustering/include/Clustering/clustering.hpp) header. The Clustering algorithm used is [k-medians](https://en.wikipedia.org/wiki/K-medians_clustering). We use the Clustering procedure on both the original dataset and its reduced version. Then, the Clustering of the reduced space gets translated in a Clustering for the original space. It is not as accurate as the direct Clustering in the original space, but it achieved much faster convergence. The silhouette values computed in the end, also suggest the above conclusion. The Clustering algorithms is implemented as follows:
+- If no pre-assigned clusters are provided for each data point, then the centroids get initialized using the [k-means++](https://en.wikipedia.org/wiki/K-means%2B%2B) algorithm. Then, [Lloyd's](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) algorithm is used for the Assignment Step. The update step is that of the k-medians algorithm.
+- If pre-assigned clusters are provided for each data point, then the data points get placed in their corresponding clusters, and then the new coordinates (components) of the cluster get computed normally, as if we had a regular update step in the k-medians algorithm.
+
+After the Clustering algorithms have been executed, their results gets logged in the specified output file, along with some other information regarding the whole procedure.
 
 
 ## Usage
@@ -91,7 +96,7 @@ First, make sure to use
 ```
 inside the [NN_Clustering](NN_Clustering) directory. Afterwards, use the following command to run the program
 ```bash
-  $ bin/cluster  –d input_file_original_space
+  $ bin/cluster –d input_file_original_space
                 -i input_file_new_space
                 –n cluster_file
                 -c configuration_file

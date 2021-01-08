@@ -6,3 +6,6 @@ data/
 object/
 bin/
 Dataset
+NN_Clustering/Dataset
+NN_Clustering/object
+NN_Clustering/bin
