@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-O3
 
 # used to compile all programs
-ALL: CLUSTER LSH
+ALL: CLUSTER SEARCH
 
 # compile clustering
 CLUSTER: ClusterMain interface_utils.o
@@ -11,12 +11,12 @@ CLUSTER: ClusterMain interface_utils.o
 ClusterMain:
 	$(CC) -c -o object/ClusterMain.o Clustering/ClusterMain.cpp $(CFLAGS)
 
-# compile LSH
-LSH: LSHMain interface_utils.o
-	$(CC) -o bin/lsh object/LSHMain.o object/interface_utils.o $(CFLAGS)
+# compile search
+SEARCH: SearchMain interface_utils.o
+	$(CC) -o bin/lsh object/search_main.o object/interface_utils.o $(CFLAGS)
 
-LSHMain:
-	$(CC) -c -o object/LSHMain.o ANN/LSHMain.cpp $(CFLAGS)
+SearchMain:
+	$(CC) -c -o object/search_main.o NearestNeighbor/search.cpp $(CFLAGS)
 
 interface_utils.o:
 	$(CC) -c -o object/interface_utils.o src/interfaces/interface_utils.cpp $(CFLAGS)
