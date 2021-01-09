@@ -34,6 +34,16 @@ namespace interface
     std::string output_file = "";
   } IOFiles;
 
+  /* struct used to group the IO (input - output) values for MH */
+  typedef struct IOFilesMH
+  {
+    std::string input_file = "";
+    std::string query_file = "";
+    std::string input_labels_file = "";
+    std::string query_labels_file = "";
+    std::string output_file = "";
+  } IOFilesMH;
+
   /* struct used to group the IOC (input - output - configuration) values */
   typedef struct IOCFiles
   {
@@ -289,6 +299,14 @@ namespace interface
     /* free the array used for the images */
     delete[] dataset.images;
     dataset.images = NULL;
+  }
+
+  /* function to free up the memory that the labelset used */
+  template <typename T>
+  void freeLabelset(Labelset<T>& labelset)
+  {
+    delete[] labelset.labels;
+    labelset.labels = NULL;
   }
 
 

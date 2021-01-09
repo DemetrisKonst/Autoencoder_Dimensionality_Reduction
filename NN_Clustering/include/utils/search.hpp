@@ -12,7 +12,7 @@ namespace utils {
   Used in kNN of brute force and LSH
   */
   template <typename T>
-  bool comparePairs (std::pair<int, Item<T>*> x, std::pair<int, Item<T>*> y) {
+  bool comparePairs (std::pair<double, Item<T>*> x, std::pair<double, Item<T>*> y) {
     return (x.first < y.first);
   }
 

@@ -14,8 +14,10 @@ namespace interface
     NO_INPUT,
     NO_INPUT_CLUSTERING,
     INVALID_INPUT_LSH,
+    INVALID_INPUT_MANHATTAN,
     INVALID_INPUT_CLUSTERING,
     HELP_MSG_LSH,
+    HELP_MSG_MANHATTAN,
     HELP_MSG_CLUSTERING,
     INVALID_K,
     INVALID_L,
@@ -57,8 +59,8 @@ namespace interface
     /* function that shows how an LSH input should be formed */
     void LSHPrintInputFormat(void);
 
-    /* function that shows how a HYPER CUBE input should be formed */
-    void HCUBEPrintInputFormat(void);
+    /* function that shows how a MANHATTAN input should be formed */
+    void ManhattanPrintInputFormat(void);
 
     /* function that shows how a CLUSTERING input should be formed */
     void clusteringShowInputFormat(void);
