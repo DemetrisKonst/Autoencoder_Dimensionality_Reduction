@@ -27,12 +27,11 @@ namespace metrics {
 
   /* function that computes the Euclidean Distance between 2 points of dimension d */
   template <typename T>
-  double EuclideanDistance(T* p, T* q, const uint16_t& d)
-  {
-    double sum = 0;
-    for (int i = 0.0; i < d; i++)
+  double EuclideanDistance(T* x, T* y, int length) {
+    double sum = 0.0;
+    for (int i = 0; i < length; i++)
     {
-      sum += (p[i] - q[i]) * (p[i] - q[i]);
+      sum += (x[i] - y[i]) * (x[i] - y[i]);
     }
 
     return sqrt(sum);

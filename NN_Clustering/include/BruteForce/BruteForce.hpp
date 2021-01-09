@@ -37,7 +37,7 @@ public:
   Each neighbor is represented as a pair of <distanceToQuery, neighborItem*>
   The following function returns a vector of these pairs
   */
-  std::vector<std::pair<int, Item<T>*>> kNN (T* query, int N, int thresh = 0) {
+  std::vector<std::pair<int, Item<T>*>> kNN (T* query, int N) {
     // At first initalize the vector itself
     std::vector<std::pair<int, Item<T>*>> d;
     // Then initialize each pair with distance -> (max integer) and a null item
@@ -64,13 +64,6 @@ public:
         d[N-1].second = items[i];
         std::sort(d.begin(), d.end(), utils::comparePairs<T>);
       }
-
-      /*
-      If a certain threshold of items traversed is reached, return the vector.
-      If thresh == 0 it indicates that the user does not want to add a threshold.
-      */
-      if (thresh != 0 && i >= thresh)
-        return d;
     }
 
     return d;
@@ -123,5 +116,19 @@ public:
       output.reduced_time = timeVec;
       output.reduced_total_time = total_time;
     }
+  }
+
+  std::vector<std::vector<std::pair<int, Item<T>*>>> getNeighbors (interface::Dataset<T>& query, int N, int metric){
+    std::vector<std::vector<std::pair<int, Item<T>*>>> neighbors;
+
+    for (int i = 0; i < query.number_of_images; i++){
+      std::vector<std::pair<int, Item<T>*>> kNNRes = kNN(query.images[i], N);
+      neighbors.push_back(kNNRes);
+
+      if ((i+1)%1000 == 0)
+        std::cout << "BF: " << i+1 << " query items..." << '\n';
+    }
+
+    return neighbors;
   }
 };

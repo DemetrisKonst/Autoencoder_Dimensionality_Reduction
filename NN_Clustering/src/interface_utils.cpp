@@ -99,6 +99,13 @@ void interface::output::LSHPrintInputFormat(void)
             << "You can type: $ ./search --help, to print this information at any time.\n";
 }
 
+void interface::output::ManhattanPrintInputFormat(void)
+{
+  std::cout << "The input from the command line parameters should be something like this:\n\n"
+            << "$ ./manhattan -d <input file> -q <query file> -l1 <input file labels> -l2 <query file labels> "
+            << "-o <output file>\n\n"
+            << "You can type: $ ./manhattan --help, to print this information at any time.\n";
+}
 
 void interface::output::clusteringShowInputFormat(void)
 {
@@ -142,6 +149,13 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
       output::LSHPrintInputFormat();
       break;
     }
+    case INVALID_INPUT_MANHATTAN:
+    {
+      std::cerr << "ERROR: command line arguments cannot be recognized. Input is invalid.\n"
+                << "Consult below on how to execute the program.\n";
+      output::ManhattanPrintInputFormat();
+      break;
+    }
     case INVALID_INPUT_CLUSTERING:
     {
       std::cerr << "ERROR: command line arguments cannot be recognized. Input is invalid.\n"
@@ -150,6 +164,11 @@ void interface::output::PrintErrorMessageAndExit(const interface::ExitCode& code
       break;
     }
     case HELP_MSG_LSH:
+    {
+      output::ManhattanPrintInputFormat();
+      break;
+    }
+    case HELP_MSG_MANHATTAN:
     {
       output::LSHPrintInputFormat();
       break;
