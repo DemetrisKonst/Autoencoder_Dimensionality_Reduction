@@ -1,3 +1,4 @@
+from math import sqrt
 import numpy as np
 from ortools.linear_solver import pywraplp
 
@@ -5,7 +6,10 @@ def manhattan(a, b):
     return np.linalg.norm(a-b, ord=1)
 
 def euclidean(a, b):
-    return np.linalg.norm(a-b, ord=2)
+    xa, ya = a
+    xb, yb = b
+    dist = sqrt((xa-xb)**2 + (ya-yb)**2)
+    return dist
 
 def emd(w, w_prime, d, max_value=1.0):
     """
