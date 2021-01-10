@@ -41,7 +41,7 @@ def emd(w, w_prime, d, max_value=1.0):
         sum_constraint = sum(list(list(zip(*f_vars))[w_prime_var]))
         solver.Add(sum_constraint == w_prime[w_prime_var])
 
-    # build the minimization target: \sum_{i=1}^m\ sum_{j=1}^n f_{ij}d_{ij}
+    # build the minimization target: \sum_{i=1}^m \sum_{j=1}^n f_{ij}d_{ij}
     target_min = sum([f_vars[w_var][w_prime_var] * d[w_var, w_prime_var]
                       for w_var in range(m) for w_prime_var in range(n)])
 
