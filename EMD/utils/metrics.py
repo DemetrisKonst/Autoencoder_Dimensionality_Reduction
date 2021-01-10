@@ -9,9 +9,9 @@ def euclidean(a, b):
 
 def emd(w, w_prime, d, max_value=1.0):
     """
-    :param ndarray w:        The supply values of the transportation problem of shape (m)
-    :param ndarray w_prime:  The demand values of the transportation problem of shape (n)
-    :param ndarray d:        The distance between the clusters w and w_prime of shape (m, n)
+    :param ndarray w:        The supply values of the transportation problem of shape (m).
+    :param ndarray w_prime:  The demand values of the transportation problem of shape (n).
+    :param ndarray d:        The distance between the clusters w and w_prime of shape (m, n).
     :param float max_value:  The max value that the supply and demand weights can have.
 
     :return:  The value of the EMD metric for a specific instance of the above parameters.
