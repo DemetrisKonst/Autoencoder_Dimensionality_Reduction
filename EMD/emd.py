@@ -43,14 +43,23 @@ def main(args):
         dataset = normalize_set(dataset)
         queryset = normalize_set(queryset)
 
-    N = 10
+        print(check_total_image_values(dataset, queryset))
 
-    manhattan_neigbors, manhattan_distances = kNN(dataset, queryset[:300], N, manhattan)
+    N = 10
+    cluster_size = 7
+
+    cw_ds = convert_to_cluster(dataset[:1], cluster_size)
+    print(cw_ds)
+    distances = calculate_distances(cluster_size)
+
+    print(distances)
+
+    # manhattan_neigbors, manhattan_distances = kNN(dataset, queryset[:1], N, manhattan)
     # print(manhattan_neigbors)
     # print(manhattan_distances)
 
-    manhattan_avg = evaluate(dlabels, qlabels, manhattan_neigbors, N)
-    print(manhattan_avg)
+    # manhattan_avg = evaluate(dlabels, qlabels, manhattan_neigbors, N)
+    # print(manhattan_avg)
 
     # correct_count = 0
     # for i in range(len(manhattan_neigbors)):
