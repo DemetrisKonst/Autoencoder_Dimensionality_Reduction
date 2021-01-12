@@ -41,3 +41,15 @@ Regarding the EMD metric, there is one parameter that can be tweaked: the size o
 The evaluation of the EMD metric -as expected- is very costly timewise, if we were to run the whole queryset (10k images) on the whole dataset (60k images), the time to do all that would be approximately 1 month and 24 days, so we obviously ran tests on subsets of those. Whether the actual accuracy of the EMD metric is around 0.8 (based on the 2nd experiment), we can't be sure unless we use some hypercomputers. However, it seems improbable that it will surpass the 0.93 mark of the Manhattan metric.
 
 ## Part 4
+To classify the images into classes, we used a very powerful classifier which has an accuracy on the test set of around 99%, no more needs be said about this as there is extensive experimentation regarding the different classifier models in this [repository](https://github.com/AndrewSpano/Autoencoder_for_MNIST). 
+<br>
+Having used that, we ran the [cluster](NN_Clustering/cluster.cpp) on the same reduced space used for **Part 2** mentioned above. The list of silhouettes for each cluster would be too long to include here, so we will keep just the objective function for each model.
+<br><br>
+
+| Model               | Value of Objective Function |
+| ------------------- | --------------------------- |
+| Original Space      | 1.1547e+09                  |
+| Reduced Space       | 1.49471e+09                 |
+| Classes as clusters | 1.22244e+09                 |
+
+<br><br>
