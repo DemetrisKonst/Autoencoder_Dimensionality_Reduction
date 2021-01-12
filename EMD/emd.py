@@ -51,7 +51,7 @@ def main(args):
     cluster_size = 7
 
     # convert the dataset/queryset into weights of clusters
-    cw_ds = convert_to_cluster(dataset[:1000], cluster_size)
+    cw_ds = convert_to_cluster(dataset, cluster_size)
     cw_qs = convert_to_cluster(queryset[:1], cluster_size)
     # calculate the euclidean distances between pixels of a 28x28 image
     centroid_distances = calculate_distances(cluster_size)
