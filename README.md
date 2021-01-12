@@ -10,12 +10,10 @@ In this project we implement 4 different evaluations regarding dimensionality re
 original item space, reduced item space and LSH application on the original space, comparison between the Wasserstein and Manhattan metrics on NN, comparison
 between centroid-based clustering through k-medians with classifier based clustering.
 
-1. The program reduce.py accepts as input a dataset and using a pretrained encoder produces a new dataset based on the latent vector output of the encoder.
-2. The program search.cpp accepts the original dataset input and the modified input from reduce.py and executes a comparison between Brute Force NN search in
-the original space, Brute Force NN search in the reduced space and LSH ANN search in the original space.
-3. **TODO**
-4. The program cluster.cpp accepts the original dataset input, the modified input from reduce.py and the predictions made by classification.py to produce 3
-different cluster models, afterwards it calculates some valuable metrics on each to evaluate their performance.
+1. The program [reduce.py](Autoencoder/src/reduce/reduce.py) accepts as input a dataset and using a pretrained encoder produces a new dataset based on the latent vector output of the encoder.
+2. The program [search.cpp](NN_Clustering/search.cpp) accepts the original dataset input and the modified input from [reduce.py](Autoencoder/src/reduce/reduce.py) and executes a comparison between Brute Force NN search in the original space, Brute Force NN search in the reduced space and LSH ANN search in the original space.
+3. The programs [manhattan.cpp](NN_Clustering/manhattan.cpp) and [emd.py](EMD/emd.py) accept as inputs a dataset, a queryset and their respective labels, then they each evaluate their own metric based on the amount of same-label neighbors returned by a kNN search.
+4. The program [cluster.cpp](NN_Clustering/cluster.cpp) accepts the original dataset input, the modified input from reduce.py and the predictions made by classification.py to produce 3 different cluster models, afterwards it calculates some valuable metrics on each to evaluate their performance.
 <br> </br>
 
 ## Part 1 - Dimensionality Reduction
