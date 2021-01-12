@@ -2,9 +2,6 @@ from math import sqrt
 import numpy as np
 from ortools.linear_solver import pywraplp
 
-def manhattan(a, b):
-    return np.linalg.norm(a-b, ord=1)
-
 def euclidean(a, b):
     xa, ya = a
     xb, yb = b

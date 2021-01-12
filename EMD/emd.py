@@ -38,41 +38,33 @@ def main(args):
     dlabels = parse_labelset(args.datasetlabels)
     qlabels = parse_labelset(args.querysetlabels)
 
-
+    # if the images dont sum up to the same number
     if (check_total_image_values(dataset, queryset) == False):
+        # normalize them
         dataset = normalize_set(dataset)
         queryset = normalize_set(queryset)
 
-        print(check_total_image_values(dataset, queryset))
+        # and check if they now properly sum up to the same number
+        print("Dataset Normalized: ", check_total_image_values(dataset, queryset))
 
     N = 10
     cluster_size = 7
 
-    cw_ds = convert_to_cluster(dataset[:1], cluster_size)
-    print(cw_ds)
-    distances = calculate_distances(cluster_size)
+    # convert the dataset/queryset into weights of clusters
+    cw_ds = convert_to_cluster(dataset[:1000], cluster_size)
+    cw_qs = convert_to_cluster(queryset[:1], cluster_size)
+    # calculate the euclidean distances between pixels of a 28x28 image
+    centroid_distances = calculate_distances(cluster_size)
 
-    print(distances)
+    # find kNN for all query images using EMD metric
+    neighbors, neighbor_distances = kNN(cw_ds, cw_qs, centroid_distances, N)
 
-    # manhattan_neigbors, manhattan_distances = kNN(dataset, queryset[:1], N, manhattan)
-    # print(manhattan_neigbors)
-    # print(manhattan_distances)
+    # calculate the average correct search results of the EMD metric
+    emd_avg = evaluate(dlabels, qlabels, neighbors, N)
 
-    # manhattan_avg = evaluate(dlabels, qlabels, manhattan_neigbors, N)
-    # print(manhattan_avg)
-
-    # correct_count = 0
-    # for i in range(len(manhattan_neigbors)):
-    #     qlabel = qlabels[i]
-    #
-    #     for neighbor in manhattan_neigbors[i]:
-    #         nlabel = dlabels[neighbor]
-    #         if nlabel == qlabel:
-    #             correct_count += 1
-    #
-    #
-    # print(correct_count, "/", len(manhattan_neigbors)*5)
-
+    # print/write results
+    print("Average Correct Search Results EMD: {}".format(emd_avg))
+    append_to_file(args.output, emd_avg)
 
 if __name__ == "__main__":
     """ call main() function here """

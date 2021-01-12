@@ -118,6 +118,10 @@ public:
     }
   }
 
+  /*
+  Function which executes kNN for all query items provided and returns the combined results
+  as a vector. Used in the manhattan metric evaluation program only.
+  */
   std::vector<std::vector<std::pair<int, Item<T>*>>> getNeighbors (interface::Dataset<T>& query, int N, int metric){
     std::vector<std::vector<std::pair<int, Item<T>*>>> neighbors;
 
