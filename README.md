@@ -34,7 +34,11 @@ With respect to the brute force NN on original space, approximation factors of t
 <br> </br>
 
 ## Part 3 - Earth Mover's Distance & Manhattan Distance metrics comparison
-**TODO** DIMITRIS
+In this part, we are evaluating the Earth Mover's Distance (Wasserstein Distance) against the Manhattan Distance as metrics. This is split into two programs. The first program lies inside the [NN_Clustering](NN_Clustering) directory and is an evaluation on the Manhattan Distance. The second program lies on the [EMD](EMD) directory and is a python script regarding the evaluation of the EMD metric. The reason we have two programs is that the Manhattan distance (which is supposed to be fast) was taking way too long on python whereas in C++ with the O3 flag during compilation, the results timewise were great. On the EMD part, we created a python script instead of modifying the aforementioned [Manhattan C++ Program](NN_Clustering/manhattan.cpp) as the tools for linear programming in C++ are a pain to use properly.
+
+The evaluation was done by taking the sum of all same-labeled neighbors returned by kNN (on each metric) divided by all neighbors returned by kNN.
+
+The [Manhattan C++ Program](NN_Clustering/manhattan.cpp) is pretty simple in its contents as it uses code from the [BruteForce](NN_Clustering/include/BruteForce/BruteForce.hpp) class used in **Part 2**. Hence, the implementation can be easily distinguished from inside the file.
 
 Regarding the implementation of the EMD metric, the approach is pretty straightforward. We start by dividing the given image into clusters, that is, we partition the image into sub-images. We calculate the signature of every cluster (sub-image), as the sum of its normalized pixel values. We also calculate the Euclidean distance of the clusters. Having these features calculated, we have prepared the foreground for computing the EMD metric.
 
@@ -93,7 +97,30 @@ Then, the file containing information about the experiment will be produced to t
 <br> </br>
 
 ### Part 3
-**TODO**
+To compare the two evaluations, you need to at first run the manhattan program. Navigate to the [NN_Clustering](NN_Clustering) directory and compile it by typing:
+```bash
+  $ make MANHATTAN
+```
+Afterwards, you can execute it by typing:
+```bash
+  $ bin/manhattan   –d input_dataset
+                    –q query_dataset
+                    –l1 input_dataset_labels
+                    -l2 query_dataset_labels
+                    -ο output_file
+```
+Once finished, the average correct search results will be both printed on the terminal and written in the provided output file path.
+<br><br>
+For the EMD evaluation program as it is a python script, there is no need for compilation, we simply have to navigate to the [EMD](EMD) directory and type:
+```bash
+  $ python3 emd.py  –d input_dataset
+                    –q query_dataset
+                    –l1 input_dataset_labels
+                    -l2 query_dataset_labels
+                    -ο output_file
+```
+Once finished, the average correct search results will be both printed on the terminal and written in the provided output file path.
+**Notice**: The results of EMD will be appended on the specified output file so if you want to store both results in a single output file, make sure you include the same output file in the arguments of both program (also, you have to run the manhattan program first as it truncates the output file provided at start).
 <br> </br>
 
 ### Part 4
@@ -116,5 +143,8 @@ inside the [NN_Clustering](NN_Clustering) directory. Afterwards, use the followi
 ```
 Then, the file containing information about the experiment will be produced to the path specified.
 <br> </br>
+
+## Analysis
+Under the [analysis](analysis) directory, there exist some experiments we have ran for all four parts of this project. Keep in mind they are not extensive and in some parts, some degree of randomness exists (in LSH for example) so you may end up with different results.
 
 ### *[GitHub Repository](https://github.com/DemetrisKonst/Autoencoder_Dimensionality_Reduction)*
