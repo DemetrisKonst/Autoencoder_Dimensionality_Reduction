@@ -51,5 +51,16 @@ Having used that, we ran the [cluster](NN_Clustering/cluster.cpp) on the same re
 | Original Space      | 1.1547e+09                  | 0.0858673          |
 | Reduced Space       | 1.49471e+09                 | -0.00315426        |
 | Classes as clusters | 1.22244e+09                 | 0.0971437          |
+<br><br>
+
+Technically speaking, assigning images of the same classes to the same clusters, should produce an optimal clustering. This is what happens, as we can see that the specific configuration achieves the highest average silhouette score. The clustering on the original space has a lower silhouette value, but also a much lower objective function value. This is to show that an optimal clustering does not always imply a global minima in the objective function, as can be seen in the example below.
+<br><br>
+
+<p align="center">
+  <img src="./images/mickey.png" alt="Sublime's custom image"/>
+</p>
 
 <br><br>
+The clustering in the reduced space is much faster, but of course does not achieve an acceptable performance. This is due to the big information loss from the original 28x28 pixels of the images, to a latent vector of size 4. This behavious is expected, and can be hardly improven.
+
+We conclude that using the classes of their images as their clusters, achieves better performance and is much faster. The downside is that in reality, when dealing with unsupervised learning we do not have labels of the input. Therefore, this technique can't be applied in the real world. Lloyd's (brute-force) clustering yields decent results, but is much slower, especially in the Big Data era. Performing clustering in the reduced space will improve running time, but decrease performance. One could argue that the tradeoff is slightly imblanaced, and that it is not worth to sacrifice all this computing power, for such worse results.
