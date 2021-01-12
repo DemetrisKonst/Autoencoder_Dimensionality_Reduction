@@ -19,10 +19,8 @@ def filepath_can_be_reached(filepath):
 
     # try to open the filepath to write, and if it throws a FileNotFoundError, then it is invalid
     try:
-        file = open(filepath, "w")
+        file = open(filepath, "r")
         file.close()
-        # delete it
-        os.remove(filepath)
     # exception was thrown, therefore filepath is invalid
     except FileNotFoundError:
         return False
@@ -61,3 +59,10 @@ def parse_labelset(filepath):
 
     # return the labels
     return labels
+
+def append_to_file(file_path, average):
+    file = open(file_path, 'a')
+
+    file.write("Average Correct Search Results EMD: {}\n".format(average))
+
+    file.close()

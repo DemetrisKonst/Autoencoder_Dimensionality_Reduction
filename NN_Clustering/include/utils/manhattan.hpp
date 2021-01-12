@@ -1,6 +1,10 @@
 #pragma once
 
 namespace utils {
+  /*
+  Function which evaluates a metric based on the labels of the k Nearest Neighbors returned
+  by a brute force approach. Essentially, accuracy = same_label_neighbors / total_neighbors
+  */
   template <typename T>
   double evaluate(std::vector<std::vector<std::pair<int, Item<T>*>>> neighbors, interface::Labelset<T> dataset_labels, interface::Labelset<T> queryset_labels, int N){
     int correct_count = 0;

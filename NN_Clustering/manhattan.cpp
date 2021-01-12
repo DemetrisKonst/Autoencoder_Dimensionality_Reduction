@@ -16,10 +16,9 @@ int main(int argc, char const *argv[]) {
   interface::Labelset<uint8_t> dataset_labels;
   interface::Labelset<uint8_t> queryset_labels;
   interface::IOFilesMH files;
-  // interface::output::SearchOutput output;
 
 
-  /* parse LSH input */
+  /* parse input */
   success = interface::input::MH::MHParseInput(argc, argv, files, status);
   /* check for potential errors or violations */
   if (success != 1) {
@@ -52,13 +51,17 @@ int main(int argc, char const *argv[]) {
     interface::output::PrintErrorMessageAndExit(status);
   }
 
-  // Initialize Brute Force for original and reduced datasets
+  // Initialize Brute Force for the dataset
   BruteForce<uint8_t> bf = BruteForce<uint8_t>(data);
+  // for each query, get its k Nearest Neighbors
   std::vector<std::vector<std::pair<int, Item<uint8_t>*>>> mneighbors = bf.getNeighbors(queryset, 10, 1);
 
-  double mavg = utils::evaluate(mneighbors, dataset_labels, queryset_labels, 10);
+  // evaluate the results based on the labels of the neighbors
+  double mh_avg = utils::evaluate(mneighbors, dataset_labels, queryset_labels, 10);
 
-  interface::output::MH::writeOutput(files.output_file, mavg, status);
+  // print/write the results
+  std::cout << "Average Correct Search Results Manhattan: " << mh_avg << '\n';
+  interface::output::MH::writeOutput(files.output_file, mh_avg, status);
 
   /* free the datasets and return, as we have finished */
   interface::freeDataset(dataset);

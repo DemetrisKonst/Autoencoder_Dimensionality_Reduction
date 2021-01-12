@@ -3,6 +3,7 @@ import numpy as np
 
 from metrics import *
 
+# function which checks whether the pixel sums of both the dataset and the queryset are equal
 def check_total_image_values(dataset, queryset):
     prev_sum = None
     for image in dataset:
@@ -20,6 +21,7 @@ def check_total_image_values(dataset, queryset):
 
     return True
 
+# if the pixel sums are not equal, normalize them
 def normalize_set(set):
     factor = 10000
     set = set.astype(np.float64)
@@ -32,6 +34,7 @@ def normalize_set(set):
 
     return set
 
+# function which returns the sums of pixels inside the cluster of images in a set
 def convert_to_cluster(set, size):
     if (size != 4 and size != 7):
         print("Cluster sizes of (4, 4) and (7, 7) supported")
@@ -55,8 +58,9 @@ def convert_to_cluster(set, size):
 
         weights.append(cluster_weights)
 
-    return weights
+    return np.array(weights)
 
+# function which calculates the distances between pixels on a 28x28 image (euclidean distance)
 def calculate_distances(size):
     clusters_per_side = 28//size
     distances = []
@@ -70,8 +74,9 @@ def calculate_distances(size):
 
             distances.append(centroid_distances)
 
-    return distances
+    return np.array(distances)
 
+# function which sorts two arrays based on one
 def sort_alongside(distances, neighbors):
     zipped = zip(distances, neighbors)
     std = sorted(zipped)
@@ -81,16 +86,17 @@ def sort_alongside(distances, neighbors):
 
     return distances, neighbors
 
-def kNN(dataset, queryset, N, metric):
+# function which returns k-Nearest Neighbors using the EMD metric
+def kNN(ds_weights, qs_weights, d, N):
     neighbors_arr = []
     distances_arr = []
 
-    for i in range(len(queryset)):
-        print(i)
+    for i in range(len(qs_weights)):
+        print("Query item ", i+1)
         neighbors = [0 for i in range(N)]
         distances = [math.inf for i in range(N)]
-        for j in range(len(dataset)):
-            dist = metric(dataset[j], queryset[i])
+        for j in range(len(ds_weights)):
+            dist = emd(ds_weights[j], qs_weights[i], d, 10000)
 
             if (dist < distances[N-1]):
                 distances[N-1] = dist
@@ -103,6 +109,7 @@ def kNN(dataset, queryset, N, metric):
 
     return neighbors_arr, distances_arr
 
+# function which returns an evaluation of a metric based on the labels of the kNNs returned
 def evaluate(dlabels, qlabels, neighbors, N):
     correct_count = 0
     for i in range(len(neighbors)):
